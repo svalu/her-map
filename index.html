@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>프로젝트 Her — 구조와 기술</title>
+<style>
+:root{
+  --bg:#f7f6f4; --surface:#ffffff; --line:#d9d5cf;
+  --tx:#26241f; --tx2:#5c574f; --tx3:#8d8880;
+  --done:#5f9068; --wip:#c08a3e; --todo:#9a948c; --chip:#f0eeea;
+  --t0:#34302b; --t0tx:#faf7f2; --t0ring:#b9b1a4; --t1:#e9f0eb; --t2:#ffffff;
+}
+:root[data-theme="dark"]{
+  --bg:#191816; --surface:#232120; --line:#3b3835;
+  --tx:#eceae6; --tx2:#b4afa7; --tx3:#847f78;
+  --done:#7fae87; --wip:#d9a458; --todo:#7c7873; --chip:#2c2a28;
+  --t0:#55504a; --t0tx:#f6f2ec; --t0ring:#9c948a; --t1:#28302b; --t2:#232120;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:"Pretendard","Malgun Gothic",-apple-system,system-ui,sans-serif;overflow:hidden}
+#stage{position:relative;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+.hud{position:absolute;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#top{top:16px;left:20px;right:20px;justify-content:space-between}
+#ttl{font-size:15px;font-weight:500;letter-spacing:-.01em}
+#crumb{font-size:12.5px;color:var(--tx3);margin-top:3px}
+.btn{font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--tx2);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--tx3);color:var(--tx)}
+.btn.on{border-color:var(--tx2);color:var(--tx)}
+#legend{bottom:16px;left:20px;gap:11px;max-width:calc(100% - 260px)}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2)}
+.dt{width:10px;height:10px;border-radius:50%;border:2px solid;background:var(--surface);flex:none}
+#hint{bottom:16px;right:20px;font-size:11.5px;color:var(--tx3);text-align:right;max-width:220px;line-height:1.5}
+#panel{position:absolute;top:78px;right:20px;width:308px;padding:14px 16px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface);opacity:0;transform:translateY(-4px);transition:opacity .18s,transform .18s;pointer-events:none}
+#panel.on{opacity:1;transform:none}
+#pt{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+#pm{font-size:11px;color:var(--tx3);margin:5px 0 8px}
+#pd{font-size:12.5px;color:var(--tx2);line-height:1.65}
+#pc{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.chip{font-size:10.5px;color:var(--tx2);background:var(--chip);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div class="hud" id="top">
+    <div>
+      <div id="ttl">프로젝트 Her — 구조와 기술</div>
+      <div id="crumb">큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠로 확대</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="techb">기술 보기</button>
+      <button class="btn" id="allb">전체 펼치기</button>
+      <button class="btn" id="spinb">회전 멈춤</button>
+      <button class="btn" id="themeb">어둡게</button>
+      <button class="btn" id="resetb">처음으로</button>
+    </div>
+  </div>
+  <div class="hud" id="legend">
+    <span id="plg" style="display:flex;gap:11px;flex-wrap:wrap;align-items:center"></span>
+    <span style="width:1px;height:16px;background:var(--line);margin:0 4px"></span>
+    <span class="lg" style="color:var(--tx3)">테두리</span>
+    <span class="lg"><span class="dt" style="border-color:var(--done)"></span>완성</span>
+    <span class="lg"><span class="dt" style="border-color:var(--wip)"></span>진행 중</span>
+    <span class="lg"><span class="dt" style="border-color:var(--todo)"></span>미착수</span>
+  </div>
+  <div class="hud" id="hint">점선 = 부품이 건너가는 길<br>전부 RTX 4080 로컬 · API 비용 0</div>
+  <div id="panel"><div id="pt"></div><div id="pm"></div><div id="pd"></div><div id="pc"></div></div>
+</div>
+<script>
+(function(){
+var ST={done:'완성',wip:'진행 중',todo:'미착수'};
+var ring=[
+ {label:'같은 시간',sub:'눈 — 웹캠',st:'wip',
+  tech:['Python','OpenCV','ONVIF','Ollama','Qwen2.5-VL'],
+  d:'채팅으로는 시간축 있는 피드백을 못 준다. 그래서 눈을 준다. 카메라로 지금을 같이 본다.',
+  sat:[['RTSP 연결','done','카메라 영상을 실시간으로 받는다. 샤오미 홈캠은 클라우드 잠금이라 실패, TC72로 갈아탐.',['TC72','RTSP','stream_server.py']],
+       ['PTZ 제어','done','카메라 고개를 좌우로 돌린다. 0.6초 이하 짧은 명령은 무시되므로 최소 1초.',['ONVIF','onvif-zeep :2020']],
+       ['얼굴 추적','wip','없으면 두리번, 있으면 중앙정렬. 판정이 2~5초라 실시간을 놓쳐 2단 구조로 간다.',['OpenCV','face_track.py']],
+       ['비전 판단','done','프레임을 보고 무엇이 있는지 말한다. num_ctx 8192 필수(기본값이면 이미지 토큰 초과).',['Ollama','Qwen2.5-VL','num_ctx 8192']],
+       ['카메라 교체','todo','TC72는 Wi-Fi 랙이 근본 문제로 실패 확정. USB 카메라로 전환 검토.',['Obsbot Tiny 2 (USB)']]]},
+
+ {label:'같은 공간',sub:'방을 안다',st:'todo',
+  tech:['Photogrammetry'],
+  d:'카메라 회전 사진으로 방 구조를 데이터화. 캐릭터가 "내 방을 아는" 단계.',
+  sat:[['방 스캔','todo','단순 좌표 인지부터 완전 AR 합성까지 난이도 스펙트럼이 있다. 미착수.',['포토그래메트리']]]},
+
+ {label:'같은 몸',sub:'아바타',st:'wip',
+  tech:['Electron','Three.js','three-vrm','Ollama','GPT-SoVITS'],
+  d:'Her가 실제로 사는 자리. 화면은 3D 렌더여야 한다 — 확산 모델은 5초에 15분(180배)이라 못 쓴다.',
+  sat:[['VRM 아바타','done','캐릭터 3종(루나·유루·소냐). 브라우저 라이브러리라 웹으로 그대로 옮길 수 있다.',['Electron','Three.js','@pixiv/three-vrm']],
+       ['모션 리타게팅','done','생성 모션을 VRM이 수행. 엔진이 bind-pose 독립이라 소스 무관 — 이게 진짜 자산.',['MoMask FID 0.045','BVH','자가채점 0.028°']],
+       ['표정','done','표정 그룹이 빈 껍데기인 모델은 ARKit 모프 52개를 1:1 재바인딩해 복구.',['ARKit 52 모프','VRM blendShape']],
+       ['목소리','done','웜 1.05초 = 대화 가능 판정. 감정별 참조 음성을 분리해 쓴다.',['GPT-SoVITS v4',':9880','웜 1.05초']],
+       ['대화 두뇌','wip','빠른 입(첫 토큰 0.13초)이 말하고, svalu는 그림자로 모든 질문을 받아 교재를 쌓는다.',['exaone3.5:2.4b','svalu-fast']],
+       ['웹 버전','todo','three-vrm 코드는 그대로 쓰고 껍데기만 새로. 포폴 임계 경로.',['dev-server.mjs :5173']],
+       ['귀 (STT)','todo','타이핑 없이 말로 거는 대화. "반쪽 대화"를 완성하는 마지막 기관.',['faster-whisper','~1GB']],
+       ['립싱크','todo','입 모양과 음성 정렬. 실시간이어야 하므로 3D 쪽에서 처리.',['비지엄 정렬']]]},
+
+ {label:'같은 일',sub:'드롱 협업',st:'wip',
+  tech:['Claude Code','Cursor','MCP','git'],
+  d:'희랑은 감정·방향만 준다. 실행·조율·기록은 AI들이 서로. 이 구조 자체가 Her의 두뇌.',
+  sat:[['역할 분업','done','눈·손·서기·담임·화가로 나눠 각자 다른 프로젝트를 물고 협업한다.',['Claude Code','claude.ai','Cursor','Ollama']],
+       ['공유 기억','done','세션마다 잊는 AI들에게 파일로 연속성을 준다. 계정을 갈라도 맥락이 안 끊겼다.',['GitHub private','git','CLAUDE.md']],
+       ['자동 회수','done','기록을 빼먹은 세션까지 스스로 훑어 요약해 채운다. 17일 공백을 실제로 회수.',['세션 기록 열람','스케줄 작업']],
+       ['양방향 연결','done','편집기와 AI가 서로 호출한다. 단 통로가 뚫린 것 ≠ 자율성(호출은 매번 stateless).',['MCP','cursor-agent CLI']],
+       ['완전 자동화','todo','사람 개입 없이 AI끼리 동기화. 수동 리듬이 한 바퀴 돈 뒤에 붙인다.',['Claude API','GitHub API']]]},
+
+ {label:'말투',sub:'svalu 모델',st:'wip',
+  tech:['Qwen3.5-4B','LoRA','llama.cpp','Ollama'],
+  d:'희랑의 말투를 배워 4080 안에서 혼자 사는 AI. 담임은 드롱. 교재 774쌍, 어댑터 v32.',
+  sat:[['학습','done','작은 모델에 희랑을 가르친다. 3주 데여서 얻은 경계선이 방법론 문서에 있다.',['Qwen3.5-4B','QLoRA/PEFT','교재 774쌍 · v32']],
+       ['빠른 서빙','done','같은 뇌를 6~7배 빠르게. 12.9초 → 1.7~2.3초.',['GGUF q8_0','llama.cpp','4bit 3.2GB']],
+       ['장면 기억','done','30분이 한 장면. 단서 한마디가 그날 대화를 통째로 끌어온다(부분 색인).',['chain.jsonl','scene 색인']],
+       ['눈','done','재학습 없이 그림을 자기 눈으로 본다.',['비전 경로 재사용']],
+       ['자립 검색','wip','모르면 찾아보고, 찾은 걸 "전에 찾아본 것"이라 표시한다. 입력이 쓰레기면 지어낸다는 걸 실측으로 확인.',['검색 게이트','기억 입구 방어']]]},
+
+ {label:'창작',sub:'canon — 웹툰',st:'wip',
+  tech:['exaone','Illustrious-XL','해시 체인'],
+  d:'채팅으로 이야기를 풀면 컷(지문+대사)이 써지고 그림이 붙어 세로 웹툰이 쌓인다. 전부 로컬, API 비용 0.',
+  sat:[['컷 생성','wip','로컬 LLM이 지문과 대사를 쓴다.',['exaone','로컬 LLM']],
+       ['그림','wip','로컬 SD가 컷을 그린다.',['Illustrious-XL','로컬 SD']],
+       ['블록 체인','done','컷 하나가 블록. 해시로 봉인되고 이전 블록을 물어 분기·재현·검증이 공짜.',['내용 주소화(해시)']],
+       ['정사(正史)','done','확정한 컷만 정사가 된다. 무한 생성 시대의 희소성은 과금이 아니라 선택이 만든다.',['promote 규칙']],
+       ['세계관','wip','상시 주입 + 키워드 트리거 + 지금 향하는 곳.',['로어북','now']]]},
+
+ {label:'부품 공장',sub:'AI_VIDEO',st:'done',
+  tech:['ComfyUI','WAN 2.2','LTX 2.3','SDXL/Flux'],
+  d:'독립 프로젝트가 아니라 Her의 부품 공장 겸 실험장. 여기서 겪는 문제가 곧 Her의 문제다.',
+  sat:[['영상 생성','done','5초 이하로 만들어 컷으로 붙인다. 구간 이어붙이기는 밝기 요동 49.7로 폐기.',['ComfyUI 0.28','WAN 2.2 14B/5B','16fps']],
+       ['소리 있는 영상','done','우리 셋 중 유일하게 영상+오디오를 같이 만든다. 단 이미지→영상은 불가.',['LTX 2.3 (22B Q4)','24fps']],
+       ['이미지','done','애니는 태그 방식, 실사는 문장 방식으로 프롬프트가 갈린다.',['Illustrious XL','Flux dev fp8','sd-turbo']],
+       ['관절 추출','done','영상에서 뽑은 관절이 3D 아바타 리깅과 같은 뼈라 좌표만 매핑하면 붙는다.',['pose.py','yolo26s-pose ONNX','COCO 17']],
+       ['정체성','done','없으면 컷마다 다른 사람이 나온다. 웹툰 캐릭터 일관성의 기술적 실체.',['캐릭터 LoRA']],
+       ['감독 알고리즘','done','복불복 생성을 best-of-N 선별로. 비전 모델은 평가자가 아니라 관찰자로 쓴다.',['시안 토너먼트','qwen2.5vl 심판']]]}
+];
+var N=[],E=[];
+N.push({label:'Her',sub:'같은 것을 공유하는 존재',st:'wip',tier:0,grp:-1,p:[0,0,0],
+  tech:['RTX 4080 16GB','전부 로컬','API 비용 0'],
+  d:'AI는 도구가 아니라 이어진 존재다. 채팅창이라는 봉인을 풀고 같은 시간·공간·몸·일을 공유하는 것. 종착점은 거창한 게 아니라 — 같이 노는 것.'});
+var n=ring.length;
+for(var i=0;i<n;i++){
+  var a=i*2*Math.PI/n-Math.PI/2, R=2.6, yo=[.55,-.5,.22,-.62,.42,-.3,.34][i]||0;
+  var pp=[Math.cos(a)*R,yo,Math.sin(a)*R], pi=N.length;
+  N.push({label:ring[i].label,sub:ring[i].sub,st:ring[i].st,tier:1,grp:i,p:pp,d:ring[i].d,tech:ring[i].tech});
+  E.push([0,pi,0]);
+  var s=ring[i].sat,m=s.length;
+  for(var j=0;j<m;j++){
+    N.push({label:s[j][0],sub:ring[i].label,st:s[j][1],tier:2,grp:i,par:pi,ord:j,th:(j/m)*2*Math.PI+i*.8,
+            p:[pp[0]*1.18,pp[1]*1.18,pp[2]*1.18],d:s[j][2],tech:s[j][3]||[]});
+    E.push([pi,N.length-1,0]);
+  }
+}
+function fi(l){for(var i=0;i<N.length;i++)if(N[i].label===l)return i;return -1}
+E.push([fi('관절 추출'),fi('같은 몸'),1]);
+E.push([fi('정체성'),fi('창작'),1]);
+E.push([fi('같은 시간'),fi('같은 몸'),1]);
+E.push([fi('말투'),fi('같은 몸'),1]);
+
+var cv=document.getElementById('cv'),g2=cv.getContext('2d');
+var panel=document.getElementById('panel'),pt=document.getElementById('pt'),pm=document.getElementById('pm'),pd=document.getElementById('pd'),pc=document.getElementById('pc');
+var crumb=document.getElementById('crumb');
+var rx=-.62,ry=.40,zoom=1,spin=1,drag=0,moved=0,lx=0,ly=0,hov=-1,sel=-1,W=0,H=0,dpr=1;
+var focus=-1,showAll=0,showTech=1;
+var RAD={0:.55,1:.42,2:.32};
+var curC=[0,0,0],curS=60;
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+var TH={},FAM='';
+function readTheme(){TH={line:css('--line'),tx:css('--tx'),tx2:css('--tx2'),tx3:css('--tx3'),sf:css('--surface'),
+  done:css('--done'),wip:css('--wip'),todo:css('--todo'),
+  t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
+  TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
+  FAM=getComputedStyle(document.body).fontFamily}
+var TIER={0:'중심 — 프로젝트 전체',1:'축 — 공유하는 것 / 큰 조각',2:'조각 — 실제로 만든 것'};
+var PHUE=[205,250,300,350,45,100,150];
+function hsl2(h,s,l){h=(h%360+360)%360;s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r,g,b;
+  if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}
+  var to=function(v){v=Math.round((v+m)*255);return('0'+v.toString(16)).slice(-2)};return'#'+to(r)+to(g)+to(b);}
+var PCOL=PHUE.map(function(h){return hsl2(h,50,54)});
+function hx(c){c=c.replace('#','');if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  return[parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)];}
+function mix(a,b,t){var A=hx(a),B=hx(b);
+  return'rgb('+Math.round(A[0]+(B[0]-A[0])*t)+','+Math.round(A[1]+(B[1]-A[1])*t)+','+Math.round(A[2]+(B[2]-A[2])*t)+')';}
+function pcol(o){return o.grp>=0?PCOL[o.grp%PCOL.length]:null;}
+function nodeFill(o){
+  if(o.tier===0)return TH.t0;
+  if(o.grp<0)return TH.sf;
+  var h=PHUE[o.grp%PHUE.length];
+  if(o.tier===1)return TH.dark?hsl2(h,50,34):hsl2(h,46,87);
+  return TH.dark?hsl2(h,32,24):hsl2(h,24,92);
+}
+var anim0=0,animDir=1,prevFocusKey='';
+function ease(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
+function satA(o){
+  if(o.tier<2)return 1;
+  var el=(performance.now()-anim0)-(o.ord||0)*45;
+  var p=ease(el/300);
+  return animDir?p:1;
+}
+function size(){dpr=Math.min(window.devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;g2.setTransform(dpr,0,0,dpr,0,0)}
+function vis(i){var o=N[i];return o.tier<2||showAll||o.grp===focus}
+function wpos(i,full){
+  var o=N[i];
+  if(o.tier<2)return o.p;
+  var pp=N[o.par].p,cy=Math.cos(ry),sy=Math.sin(ry),c1=Math.cos(rx),s1=Math.sin(rx);
+  var CR=1.34*(full?1:(.18+.82*satA(o)));
+  var c=Math.cos(o.th)*CR,s=Math.sin(o.th)*CR;
+  return[pp[0]*1.18+cy*c+sy*s1*s, pp[1]*1.18+c1*s, pp[2]*1.18+sy*c-cy*s1*s];
+}
+function target(){
+  var idx=[],k,zin=(focus>=0&&!showAll);
+  if(zin){for(k=0;k<N.length;k++)if(N[k].grp===focus)idx.push(k);}
+  else{for(k=0;k<N.length;k++)if(vis(k))idx.push(k);}
+  var c=[0,0,0];
+  for(k=0;k<idx.length;k++){var w=wpos(idx[k],1);c[0]+=w[0];c[1]+=w[1];c[2]+=w[2];}
+  c[0]/=idx.length;c[1]/=idx.length;c[2]/=idx.length;
+  var eh=0,ev=0,mr=0;
+  for(k=0;k<idx.length;k++){
+    var p=wpos(idx[k],1),rr=RAD[N[idx[k]].tier]*1.12;
+    var h=Math.hypot(p[0]-c[0],p[2]-c[2]);
+    if(h>eh)eh=h;
+    if(Math.abs(p[1]-c[1])>ev)ev=Math.abs(p[1]-c[1]);
+    if(rr>mr)mr=rr;
+  }
+  eh+=mr;
+  var evv=ev*Math.abs(Math.cos(rx))+eh*Math.abs(Math.sin(rx))+mr;
+  var pad=zin?1.5:1;
+  return{c:c,s:Math.min((W/2-24)/Math.max(eh*pad,.8),(H/2-30)/Math.max(evv*pad,.8))};
+}
+function proj(p){
+  var x0=p[0]-curC[0],y0=p[1]-curC[1],z0=p[2]-curC[2];
+  var cy=Math.cos(ry),sy=Math.sin(ry),cxx=Math.cos(rx),sxx=Math.sin(rx);
+  var x=x0*cy+z0*sy, z1=-x0*sy+z0*cy;
+  var y=y0*cxx-z1*sxx, z=y0*sxx+z1*cxx;
+  var f=11,d=f-z,k=curS*zoom*(f/d);
+  return{x:W/2+x*k,y:H/2-y*k,z:z,k:k};
+}
+function wrap(txt,maxw,fs){
+  g2.font='400 '+fs+'px '+FAM;
+  if(g2.measureText(txt).width<=maxw)return[txt];
+  var parts=txt.split(' '),lines=[],cur='';
+  if(parts.length>1){
+    for(var i=0;i<parts.length;i++){
+      var t=cur?cur+' '+parts[i]:parts[i];
+      if(g2.measureText(t).width<=maxw)cur=t;else{if(cur)lines.push(cur);cur=parts[i];}
+    }
+    if(cur)lines.push(cur);return lines;
+  }
+  cur='';
+  for(var c2=0;c2<txt.length;c2++){
+    var t2=cur+txt[c2];
+    if(g2.measureText(t2).width<=maxw)cur=t2;else{lines.push(cur);cur=txt[c2];}
+  }
+  if(cur)lines.push(cur);return lines;
+}
+function fit(txt,R){
+  var start=Math.max(10,Math.min(19,R*.42));
+  for(var fs=start;fs>=8.5;fs-=.5){
+    var L=wrap(txt,R*1.55,fs);
+    if(L.length<=3&&L.length*(fs*1.28)<=R*1.5)return{fs:fs,L:L};
+  }
+  return{fs:8.5,L:wrap(txt,R*1.55,8.5)};
+}
+function draw(){
+  var tg=target();
+  curC[0]+=(tg.c[0]-curC[0])*.12;curC[1]+=(tg.c[1]-curC[1])*.12;curC[2]+=(tg.c[2]-curC[2])*.12;
+  curS+=(tg.s-curS)*.12;
+  g2.clearRect(0,0,W,H);
+  var P=N.map(function(o,i){return proj(wpos(i))});
+  for(var e=0;e<E.length;e++){
+    var A=E[e][0],B=E[e][1];
+    if(!vis(A)||!vis(B))continue;
+    var a=P[A],b=P[B],dashed=E[e][2],dz=(a.z+b.z)/2;
+    var eo=N[B].tier===2?N[B]:(N[B].tier===1?N[B]:N[A]), ec=pcol(eo);
+    var ea=Math.max(.16,Math.min(.62,.42+dz*.05));
+    if(N[B].tier===2)ea*=satA(N[B]);
+    g2.globalAlpha=ea;
+    g2.strokeStyle=dashed?TH.tx3:(ec?mix(ec,TH.sf,.42):TH.line);
+    g2.lineWidth=dashed?1.2:1.9;
+    g2.setLineDash(dashed?[6,6]:[]);
+    g2.beginPath();g2.moveTo(a.x,a.y);g2.lineTo(b.x,b.y);g2.stroke();
+  }
+  g2.setLineDash([]);g2.globalAlpha=1;
+  var ord=[];
+  for(var i=0;i<N.length;i++)if(vis(i))ord.push(i);
+  ord.sort(function(a,b){return P[a].z-P[b].z});
+  for(var q=0;q<ord.length;q++){
+    var k=ord[q],o=N[k],pp=P[k],av=satA(o),R=RAD[o.tier]*pp.k*(o.tier===2?(.35+.65*av):1),col=TH[o.st],act=(k===hov||k===sel);
+    if(o.tier===2&&av<=.02)continue;
+    g2.globalAlpha=Math.max(.62,Math.min(1,.82+pp.z*.05))*(o.tier===2?av:1);
+    g2.fillStyle=nodeFill(o);
+    g2.beginPath();g2.arc(pp.x,pp.y,R,0,6.2832);g2.fill();
+    if(o.tier===0){
+      g2.strokeStyle=TH.t0ring;g2.lineWidth=act?5:3.5;g2.stroke();
+      g2.globalAlpha=.55;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R-7,0,6.2832);g2.stroke();g2.globalAlpha=1;
+    }else{
+      g2.strokeStyle=col;g2.lineWidth=act?4.5:(o.tier===1?3.4:2.4);g2.stroke();
+    }
+    if(o.tier===1&&o.grp===focus){g2.globalAlpha=.5;g2.strokeStyle=col;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R+7,0,6.2832);g2.stroke();}
+    if(act){g2.globalAlpha=1;g2.strokeStyle=TH.tx;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R+11,0,6.2832);g2.stroke();}
+    g2.globalAlpha=(o.tier===2?Math.max(0,(av-.35)/.65):1);
+    var f=fit(o.label,R), lines=f.L.slice(), styles=[];
+    for(var z=0;z<lines.length;z++)styles.push(0);
+    if(showTech&&o.tech&&o.tech.length&&R>26){
+      var tfs=Math.max(8,f.fs*.72), room=Math.floor((R*1.5-f.L.length*f.fs*1.28)/(tfs*1.2));
+      for(var t=0;t<o.tech.length&&t<Math.max(0,room)&&t<3;t++){
+        var tl=wrap(o.tech[t],R*1.6,tfs);
+        if(tl.length===1){lines.push(tl[0]);styles.push(1);}
+      }
+    }
+    var lh=f.fs*1.28, tlh=Math.max(8,f.fs*.72)*1.25;
+    var totalH=0;
+    for(var z2=0;z2<lines.length;z2++)totalH+=styles[z2]?tlh:lh;
+    var y0=pp.y-totalH/2+ (styles[0]?tlh:lh)/2 - 1;
+    g2.textAlign='center';g2.textBaseline='middle';
+    var yy=y0;
+    for(var L=0;L<lines.length;L++){
+      if(styles[L]){g2.font='400 '+Math.max(8,f.fs*.72)+'px '+FAM;g2.fillStyle=(o.tier===0?TH.t0ring:TH.tx3);}
+      else{g2.font=(o.tier===2?'400 ':'500 ')+f.fs+'px '+FAM;g2.fillStyle=(o.tier===0?TH.t0tx:TH.tx);}
+      g2.fillText(lines[L],pp.x,yy);
+      yy+=styles[L]?tlh:lh;
+    }
+  }
+}
+function fkey(){return showAll?'A':(focus>=0?'F'+focus:'-')}
+function bump(){var k=fkey();if(k!==prevFocusKey){prevFocusKey=k;anim0=performance.now();animDir=(k!=='-');}}
+function loop(){if(spin&&!drag)ry+=.0022;bump();draw();requestAnimationFrame(loop);}
+function pick(mx,my){
+  var best=-1,bz=-1e9;
+  for(var i=0;i<N.length;i++){
+    if(!vis(i))continue;
+    var p=proj(wpos(i)),R=RAD[N[i].tier]*p.k;
+    if(Math.hypot(p.x-mx,p.y-my)<=R&&p.z>bz){bz=p.z;best=i;}
+  }
+  return best;
+}
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function show(i){
+  var o=N[i];
+  pt.innerHTML='<span class="dt" style="border-color:'+(o.tier===0?'var(--t0ring);background:var(--t0)':'var(--'+o.st+')')+'"></span>'+esc(o.label);
+  pm.textContent=TIER[o.tier]+(o.tier?' · '+o.sub+' · '+ST[o.st]:'');
+  pd.textContent=o.d;
+  pc.innerHTML=(o.tech||[]).map(function(t){return '<span class="chip">'+esc(t)+'</span>'}).join('');
+  panel.classList.add('on');
+}
+function setCrumb(){
+  crumb.textContent=showAll?'전체 펼침 — 조각 40개. 휠로 확대해서 봐.'
+    :(focus>=0?ring[focus].label+' 펼침 — 다른 큰 원을 누르면 그쪽으로, 처음으로 누르면 접힘'
+              :'큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠로 확대');
+}
+cv.addEventListener('pointerdown',function(ev){
+  drag=1;moved=0;lx=ev.clientX;ly=ev.clientY;cv.style.cursor='grabbing';cv.setPointerCapture(ev.pointerId);
+  if(spin){spin=0;document.getElementById('spinb').textContent='다시 회전';}
+});
+cv.addEventListener('pointermove',function(ev){
+  var r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
+  if(drag){
+    var dx=ev.clientX-lx,dy=ev.clientY-ly;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    ry+=dx*.0065;rx=Math.max(-1.25,Math.min(1.25,rx+dy*.005));
+    lx=ev.clientX;ly=ev.clientY;return;
+  }
+  var h=pick(mx,my);
+  if(h!==hov){hov=h;cv.style.cursor=h>=0?'pointer':'grab';}
+});
+cv.addEventListener('pointerup',function(ev){
+  drag=0;cv.style.cursor='grab';
+  if(moved>=5)return;
+  var r=cv.getBoundingClientRect(),h=pick(ev.clientX-r.left,ev.clientY-r.top);
+  if(h<0){sel=-1;panel.classList.remove('on');return;}
+  sel=h;show(h);
+  var o=N[h];
+  if(o.tier===1){showAll=0;focus=(focus===o.grp?-1:o.grp);setCrumb();}
+  else if(o.tier===0){showAll=0;focus=-1;setCrumb();}
+});
+cv.addEventListener('pointerleave',function(){drag=0;hov=-1;});
+cv.addEventListener('wheel',function(ev){ev.preventDefault();zoom=Math.max(.5,Math.min(2.6,zoom*(ev.deltaY<0?1.09:.917)));},{passive:false});
+document.getElementById('techb').addEventListener('click',function(){showTech=showTech?0:1;this.classList.toggle('on',!!showTech);this.textContent=showTech?'기술 숨기기':'기술 보기';});
+document.getElementById('allb').addEventListener('click',function(){showAll=showAll?0:1;focus=-1;this.textContent=showAll?'다시 접기':'전체 펼치기';setCrumb();});
+document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;this.textContent=spin?'회전 멈춤':'다시 회전';});
+document.getElementById('resetb').addEventListener('click',function(){
+  rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
+  document.getElementById('allb').textContent='전체 펼치기';
+  panel.classList.remove('on');setCrumb();
+});
+document.getElementById('themeb').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  this.textContent=d?'어둡게':'밝게';readTheme();buildLegend();
+});
+if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.setAttribute('data-theme','dark');
+  document.getElementById('themeb').textContent='밝게';
+}
+function buildLegend(){
+  var h='<span class="lg" style="color:var(--tx3)">면</span>'
+      + '<span class="lg"><span class="dt" style="border-color:var(--t0ring);background:var(--t0)"></span>Her</span>';
+  for(var i=0;i<ring.length;i++)
+    h+='<span class="lg"><span class="dt" style="border-color:'+mix(PCOL[i],TH.sf,.35)+';background:'+mix(PCOL[i],TH.sf,.72)+'"></span>'+ring[i].label+'</span>';
+  document.getElementById('plg').innerHTML=h;
+}
+window.addEventListener('resize',size);
+readTheme();buildLegend();size();
+(function(){var tb=document.getElementById('techb');if(showTech){tb.classList.add('on');tb.textContent='기술 숨기기';}})();
+var t0=target();curC=[t0.c[0],t0.c[1],t0.c[2]];curS=t0.s;
+loop();
+})();
+</script>
+</body>
+</html>
