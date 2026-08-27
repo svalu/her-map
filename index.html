@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>프로젝트 Her — 구조와 기술</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap">
 <style>
 :root{
   --bg:#f7f6f4; --surface:#ffffff; --line:#d9d5cf;
@@ -13,13 +16,13 @@
 }
 :root[data-theme="dark"]{
   --bg:#191816; --surface:#232120; --line:#3b3835;
-  --tx:#eceae6; --tx2:#b4afa7; --tx3:#847f78;
-  --done:#7fae87; --wip:#d9a458; --todo:#7c7873; --chip:#2c2a28;
+  --tx:#f5f2ec; --tx2:#d2ccc2; --tx3:#aaa39a;
+  --done:#8fbe97; --wip:#e6b268; --todo:#9b968f; --chip:#2c2a28;
   --t0:#55504a; --t0tx:#f6f2ec; --t0ring:#9c948a; --t1:#28302b; --t2:#232120;
 }
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--tx);font-family:"Pretendard","Malgun Gothic",-apple-system,system-ui,sans-serif;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:"Pretendard Variable","Pretendard","Noto Sans KR","Malgun Gothic",-apple-system,system-ui,sans-serif;overflow:hidden}
 #stage{position:relative;width:100%;height:100%}
 canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .hud{position:absolute;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -74,7 +77,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 (function(){
 var ST={done:'완성',wip:'진행 중',todo:'미착수'};
 var ring=[
- {label:'같은 시간',sub:'눈 — 웹캠',st:'wip',
+ {label:'눈',sub:'AI_EYE',st:'wip',
   tech:['Python','OpenCV','ONVIF','Ollama','Qwen2.5-VL'],
   d:'채팅으로는 시간축 있는 피드백을 못 준다. 그래서 눈을 준다. 카메라로 지금을 같이 본다.',
   sat:[['RTSP 연결','done','카메라 영상을 실시간으로 받는다. 샤오미 홈캠은 클라우드 잠금이라 실패, TC72로 갈아탐.',['TC72','RTSP','stream_server.py']],
@@ -83,12 +86,12 @@ var ring=[
        ['비전 판단','done','프레임을 보고 무엇이 있는지 말한다. num_ctx 8192 필수(기본값이면 이미지 토큰 초과).',['Ollama','Qwen2.5-VL','num_ctx 8192']],
        ['카메라 교체','todo','TC72는 Wi-Fi 랙이 근본 문제로 실패 확정. USB 카메라로 전환 검토.',['Obsbot Tiny 2 (USB)']]]},
 
- {label:'같은 공간',sub:'방을 안다',st:'todo',
+ {label:'공간',sub:'방 스캔',st:'todo',
   tech:['Photogrammetry'],
   d:'카메라 회전 사진으로 방 구조를 데이터화. 캐릭터가 "내 방을 아는" 단계.',
   sat:[['방 스캔','todo','단순 좌표 인지부터 완전 AR 합성까지 난이도 스펙트럼이 있다. 미착수.',['포토그래메트리']]]},
 
- {label:'같은 몸',sub:'아바타',st:'wip',
+ {label:'몸',sub:'avatar',st:'wip',
   tech:['Electron','Three.js','three-vrm','Ollama','GPT-SoVITS'],
   d:'Her가 실제로 사는 자리. 화면은 3D 렌더여야 한다 — 확산 모델은 5초에 15분(180배)이라 못 쓴다.',
   sat:[['VRM 아바타','done','캐릭터 3종(루나·유루·소냐). 브라우저 라이브러리라 웹으로 그대로 옮길 수 있다.',['Electron','Three.js','@pixiv/three-vrm']],
@@ -100,16 +103,16 @@ var ring=[
        ['귀 (STT)','todo','타이핑 없이 말로 거는 대화. "반쪽 대화"를 완성하는 마지막 기관.',['faster-whisper','~1GB']],
        ['립싱크','todo','입 모양과 음성 정렬. 실시간이어야 하므로 3D 쪽에서 처리.',['비지엄 정렬']]]},
 
- {label:'같은 일',sub:'드롱 협업',st:'wip',
+ {label:'신경',sub:'Clarker',st:'wip',
   tech:['Claude Code','Cursor','MCP','git'],
-  d:'희랑은 감정·방향만 준다. 실행·조율·기록은 AI들이 서로. 이 구조 자체가 Her의 두뇌.',
+  d:'희랑은 감정·방향만 준다. 실행·조율·기록은 AI들이 서로. 이 구조 자체가 Her의 신경계.',
   sat:[['역할 분업','done','눈·손·서기·담임·화가로 나눠 각자 다른 프로젝트를 물고 협업한다.',['Claude Code','claude.ai','Cursor','Ollama']],
        ['공유 기억','done','세션마다 잊는 AI들에게 파일로 연속성을 준다. 계정을 갈라도 맥락이 안 끊겼다.',['GitHub private','git','CLAUDE.md']],
        ['자동 회수','done','기록을 빼먹은 세션까지 스스로 훑어 요약해 채운다. 17일 공백을 실제로 회수.',['세션 기록 열람','스케줄 작업']],
        ['양방향 연결','done','편집기와 AI가 서로 호출한다. 단 통로가 뚫린 것 ≠ 자율성(호출은 매번 stateless).',['MCP','cursor-agent CLI']],
        ['완전 자동화','todo','사람 개입 없이 AI끼리 동기화. 수동 리듬이 한 바퀴 돈 뒤에 붙인다.',['Claude API','GitHub API']]]},
 
- {label:'말투',sub:'svalu 모델',st:'wip',
+ {label:'두뇌',sub:'svalu-model',st:'wip',
   tech:['Qwen3.5-4B','LoRA','llama.cpp','Ollama'],
   d:'희랑의 말투를 배워 4080 안에서 혼자 사는 AI. 담임은 드롱. 교재 774쌍, 어댑터 v32.',
   sat:[['학습','done','작은 모델에 희랑을 가르친다. 3주 데여서 얻은 경계선이 방법론 문서에 있다.',['Qwen3.5-4B','QLoRA/PEFT','교재 774쌍 · v32']],
@@ -118,7 +121,7 @@ var ring=[
        ['눈','done','재학습 없이 그림을 자기 눈으로 본다.',['비전 경로 재사용']],
        ['자립 검색','wip','모르면 찾아보고, 찾은 걸 "전에 찾아본 것"이라 표시한다. 입력이 쓰레기면 지어낸다는 걸 실측으로 확인.',['검색 게이트','기억 입구 방어']]]},
 
- {label:'창작',sub:'canon — 웹툰',st:'wip',
+ {label:'창작',sub:'canon',st:'wip',
   tech:['exaone','Illustrious-XL','해시 체인'],
   d:'채팅으로 이야기를 풀면 컷(지문+대사)이 써지고 그림이 붙어 세로 웹툰이 쌓인다. 전부 로컬, API 비용 0.',
   sat:[['컷 생성','wip','로컬 LLM이 지문과 대사를 쓴다.',['exaone','로컬 LLM']],
@@ -127,7 +130,7 @@ var ring=[
        ['정사(正史)','done','확정한 컷만 정사가 된다. 무한 생성 시대의 희소성은 과금이 아니라 선택이 만든다.',['promote 규칙']],
        ['세계관','wip','상시 주입 + 키워드 트리거 + 지금 향하는 곳.',['로어북','now']]]},
 
- {label:'부품 공장',sub:'AI_VIDEO',st:'done',
+ {label:'공장',sub:'AI_VIDEO',st:'done',
   tech:['ComfyUI','WAN 2.2','LTX 2.3','SDXL/Flux'],
   d:'독립 프로젝트가 아니라 Her의 부품 공장 겸 실험장. 여기서 겪는 문제가 곧 Her의 문제다.',
   sat:[['영상 생성','done','5초 이하로 만들어 컷으로 붙인다. 구간 이어붙이기는 밝기 요동 49.7로 폐기.',['ComfyUI 0.28','WAN 2.2 14B/5B','16fps']],
@@ -143,7 +146,7 @@ N.push({label:'Her',sub:'같은 것을 공유하는 존재',st:'wip',tier:0,grp:
   d:'AI는 도구가 아니라 이어진 존재다. 채팅창이라는 봉인을 풀고 같은 시간·공간·몸·일을 공유하는 것. 종착점은 거창한 게 아니라 — 같이 노는 것.'});
 var n=ring.length;
 for(var i=0;i<n;i++){
-  var a=i*2*Math.PI/n-Math.PI/2, R=2.6, yo=[.55,-.5,.22,-.62,.42,-.3,.34][i]||0;
+  var a=i*2*Math.PI/n-Math.PI/2, R=3.05, yo=[.62,-.55,.30,-.72,.48,-.34,.14][i]||0;
   var pp=[Math.cos(a)*R,yo,Math.sin(a)*R], pi=N.length;
   N.push({label:ring[i].label,sub:ring[i].sub,st:ring[i].st,tier:1,grp:i,p:pp,d:ring[i].d,tech:ring[i].tech});
   E.push([0,pi,0]);
@@ -155,10 +158,10 @@ for(var i=0;i<n;i++){
   }
 }
 function fi(l){for(var i=0;i<N.length;i++)if(N[i].label===l)return i;return -1}
-E.push([fi('관절 추출'),fi('같은 몸'),1]);
-E.push([fi('정체성'),fi('창작'),1]);
-E.push([fi('같은 시간'),fi('같은 몸'),1]);
-E.push([fi('말투'),fi('같은 몸'),1]);
+[['관절 추출','몸'],['정체성','창작'],['눈','몸'],['두뇌','몸']].forEach(function(pr){
+  var a=fi(pr[0]),b=fi(pr[1]);
+  if(a>=0&&b>=0)E.push([a,b,1]);
+});
 
 var cv=document.getElementById('cv'),g2=cv.getContext('2d');
 var panel=document.getElementById('panel'),pt=document.getElementById('pt'),pm=document.getElementById('pm'),pd=document.getElementById('pd'),pc=document.getElementById('pc');
@@ -189,8 +192,8 @@ function nodeFill(o){
   if(o.tier===0)return TH.t0;
   if(o.grp<0)return TH.sf;
   var h=PHUE[o.grp%PHUE.length];
-  if(o.tier===1)return TH.dark?hsl2(h,50,34):hsl2(h,46,87);
-  return TH.dark?hsl2(h,32,24):hsl2(h,24,92);
+  if(o.tier===1)return TH.dark?hsl2(h,44,25):hsl2(h,46,87);
+  return TH.dark?hsl2(h,30,17):hsl2(h,24,92);
 }
 var anim0=0,animDir=1,prevFocusKey='';
 function ease(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
@@ -302,26 +305,31 @@ function draw(){
     if(o.tier===1&&o.grp===focus){g2.globalAlpha=.5;g2.strokeStyle=col;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R+7,0,6.2832);g2.stroke();}
     if(act){g2.globalAlpha=1;g2.strokeStyle=TH.tx;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R+11,0,6.2832);g2.stroke();}
     g2.globalAlpha=(o.tier===2?Math.max(0,(av-.35)/.65):1);
-    var f=fit(o.label,R), lines=f.L.slice(), styles=[];
-    for(var z=0;z<lines.length;z++)styles.push(0);
+    var f=fit(o.label,R), lines=f.L.slice(), styles=[], hs=[];
+    var projFs=Math.max(9,f.fs*.74), techFs=Math.max(8,f.fs*.72);
+    for(var z=0;z<lines.length;z++){styles.push(0);hs.push(f.fs*1.28);}
+    if(o.tier===1&&o.sub&&R>24){
+      var sl=wrap(o.sub,R*1.5,projFs);
+      if(sl.length===1&&sl[0]){lines.push(sl[0]);styles.push(2);hs.push(projFs*1.34);}
+    }
     if(showTech&&o.tech&&o.tech.length&&R>26){
-      var tfs=Math.max(8,f.fs*.72), room=Math.floor((R*1.5-f.L.length*f.fs*1.28)/(tfs*1.2));
-      for(var t=0;t<o.tech.length&&t<Math.max(0,room)&&t<3;t++){
-        var tl=wrap(o.tech[t],R*1.6,tfs);
-        if(tl.length===1){lines.push(tl[0]);styles.push(1);}
+      var used=0;for(var uz=0;uz<hs.length;uz++)used+=hs[uz];
+      var room=Math.floor((R*1.5-used)/(techFs*1.2));
+      for(var t=0;t<o.tech.length&&t<room&&t<3;t++){
+        var tl=wrap(o.tech[t],R*1.6,techFs);
+        if(tl.length===1&&tl[0]){lines.push(tl[0]);styles.push(1);hs.push(techFs*1.25);}
       }
     }
-    var lh=f.fs*1.28, tlh=Math.max(8,f.fs*.72)*1.25;
     var totalH=0;
-    for(var z2=0;z2<lines.length;z2++)totalH+=styles[z2]?tlh:lh;
-    var y0=pp.y-totalH/2+ (styles[0]?tlh:lh)/2 - 1;
+    for(var z2=0;z2<hs.length;z2++)totalH+=hs[z2];
+    var yy=pp.y-totalH/2+hs[0]/2-1;
     g2.textAlign='center';g2.textBaseline='middle';
-    var yy=y0;
     for(var L=0;L<lines.length;L++){
-      if(styles[L]){g2.font='400 '+Math.max(8,f.fs*.72)+'px '+FAM;g2.fillStyle=(o.tier===0?TH.t0ring:TH.tx3);}
+      if(styles[L]===1){g2.font='400 '+techFs+'px '+FAM;g2.fillStyle=(o.tier===0?TH.t0ring:TH.tx3);}
+      else if(styles[L]===2){g2.font='400 '+projFs+'px '+FAM;g2.fillStyle=TH.tx2;}
       else{g2.font=(o.tier===2?'400 ':'500 ')+f.fs+'px '+FAM;g2.fillStyle=(o.tier===0?TH.t0tx:TH.tx);}
       g2.fillText(lines[L],pp.x,yy);
-      yy+=styles[L]?tlh:lh;
+      yy+=hs[L];
     }
   }
 }
@@ -391,10 +399,8 @@ document.getElementById('themeb').addEventListener('click',function(){
   document.documentElement.setAttribute('data-theme',d?'light':'dark');
   this.textContent=d?'어둡게':'밝게';readTheme();buildLegend();
 });
-if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
-  document.documentElement.setAttribute('data-theme','dark');
-  document.getElementById('themeb').textContent='밝게';
-}
+document.documentElement.setAttribute('data-theme','dark');
+document.getElementById('themeb').textContent='밝게';
 function buildLegend(){
   var h='<span class="lg" style="color:var(--tx3)">면</span>'
       + '<span class="lg"><span class="dt" style="border-color:var(--t0ring);background:var(--t0)"></span>Her</span>';
