@@ -44,6 +44,16 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 #pd{font-size:12.5px;color:var(--tx2);line-height:1.65}
 #pc{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 .chip{font-size:10.5px;color:var(--tx2);background:var(--chip);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+@media (max-width:640px){
+  #top{top:10px;left:12px;right:12px}
+  #ttl{font-size:14px}
+  #crumb{font-size:11px;line-height:1.45}
+  .btn{font-size:11px;padding:4px 8px}
+  #hint{display:none}
+  #legend{left:12px;right:12px;bottom:12px;max-width:none;gap:8px}
+  .lg{font-size:11px;gap:4px}
+  #panel{top:auto;bottom:84px;left:12px;right:12px;width:auto;max-height:38vh;overflow:auto}
+}
 </style>
 </head>
 <body>
@@ -52,7 +62,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
   <div class="hud" id="top">
     <div>
       <div id="ttl">프로젝트 Her — 구조와 기술</div>
-      <div id="crumb">큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠로 확대</div>
+      <div id="crumb">큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠/핀치로 확대</div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn" id="techb">기술 보기</button>
@@ -355,15 +365,24 @@ function show(i){
   panel.classList.add('on');
 }
 function setCrumb(){
-  crumb.textContent=showAll?'전체 펼침 — 조각 40개. 휠로 확대해서 봐.'
+  crumb.textContent=showAll?'전체 펼침 — 조각 40개. 휠이나 두 손가락으로 확대해서 봐.'
     :(focus>=0?ring[focus].label+' 펼침 — 다른 큰 원을 누르면 그쪽으로, 처음으로 누르면 접힘'
-              :'큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠로 확대');
+              :'큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠/핀치로 확대');
 }
+var pts=new Map(),pinch=0,pd0=0,pz0=1;
+function ptsDist(){var a=[];pts.forEach(function(v){a.push(v)});
+  return a.length<2?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
 cv.addEventListener('pointerdown',function(ev){
-  drag=1;moved=0;lx=ev.clientX;ly=ev.clientY;cv.style.cursor='grabbing';cv.setPointerCapture(ev.pointerId);
+  pts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   if(spin){spin=0;document.getElementById('spinb').textContent='다시 회전';}
+  if(pts.size>=2){pinch=1;drag=0;moved=999;pd0=ptsDist()||1;pz0=zoom;cv.style.cursor='grab';return;}
+  drag=1;moved=0;lx=ev.clientX;ly=ev.clientY;cv.style.cursor='grabbing';
+  try{cv.setPointerCapture(ev.pointerId)}catch(e){}
 });
 cv.addEventListener('pointermove',function(ev){
+  if(pts.has(ev.pointerId))pts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(pinch&&pts.size>=2){var pdn=ptsDist();
+    if(pdn>0)zoom=Math.max(.5,Math.min(3.2,pz0*(pdn/pd0)));return;}
   var r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
   if(drag){
     var dx=ev.clientX-lx,dy=ev.clientY-ly;
@@ -374,7 +393,9 @@ cv.addEventListener('pointermove',function(ev){
   var h=pick(mx,my);
   if(h!==hov){hov=h;cv.style.cursor=h>=0?'pointer':'grab';}
 });
-cv.addEventListener('pointerup',function(ev){
+function endPtr(ev){
+  pts.delete(ev.pointerId);
+  if(pinch){if(pts.size===0)pinch=0;drag=0;cv.style.cursor='grab';return;}
   drag=0;cv.style.cursor='grab';
   if(moved>=5)return;
   var r=cv.getBoundingClientRect(),h=pick(ev.clientX-r.left,ev.clientY-r.top);
@@ -383,9 +404,11 @@ cv.addEventListener('pointerup',function(ev){
   var o=N[h];
   if(o.tier===1){showAll=0;focus=(focus===o.grp?-1:o.grp);setCrumb();}
   else if(o.tier===0){showAll=0;focus=-1;setCrumb();}
-});
-cv.addEventListener('pointerleave',function(){drag=0;hov=-1;});
-cv.addEventListener('wheel',function(ev){ev.preventDefault();zoom=Math.max(.5,Math.min(2.6,zoom*(ev.deltaY<0?1.09:.917)));},{passive:false});
+}
+cv.addEventListener('pointerup',endPtr);
+cv.addEventListener('pointercancel',function(ev){pts.delete(ev.pointerId);if(pts.size===0)pinch=0;drag=0;});
+cv.addEventListener('pointerleave',function(){if(!pinch)drag=0;hov=-1;});
+cv.addEventListener('wheel',function(ev){ev.preventDefault();zoom=Math.max(.5,Math.min(3.2,zoom*(ev.deltaY<0?1.09:.917)));},{passive:false});
 document.getElementById('techb').addEventListener('click',function(){showTech=showTech?0:1;this.classList.toggle('on',!!showTech);this.textContent=showTech?'기술 숨기기':'기술 보기';});
 document.getElementById('allb').addEventListener('click',function(){showAll=showAll?0:1;focus=-1;this.textContent=showAll?'다시 접기':'전체 펼치기';setCrumb();});
 document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;this.textContent=spin?'회전 멈춤':'다시 회전';});
