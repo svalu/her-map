@@ -11,13 +11,13 @@
 :root{
   --bg:#f7f6f4; --surface:#ffffff; --line:#d9d5cf;
   --tx:#26241f; --tx2:#5c574f; --tx3:#8d8880;
-  --done:#5f9068; --wip:#c08a3e; --todo:#9a948c; --chip:#f0eeea;
+  --done:#5f9068; --wip:#c08a3e; --todo:#9a948c; --chip:#f0eeea; --hud:#3d3a34;
   --t0:#34302b; --t0tx:#faf7f2; --t0ring:#b9b1a4; --t1:#e9f0eb; --t2:#ffffff;
 }
 :root[data-theme="dark"]{
   --bg:#191816; --surface:#232120; --line:#3b3835;
   --tx:#f5f2ec; --tx2:#d2ccc2; --tx3:#aaa39a;
-  --done:#8fbe97; --wip:#e6b268; --todo:#9b968f; --chip:#2c2a28;
+  --done:#8fbe97; --wip:#e6b268; --todo:#9b968f; --chip:#2c2a28; --hud:#b8b1a8;
   --t0:#55504a; --t0tx:#f6f2ec; --t0ring:#9c948a; --t1:#28302b; --t2:#232120;
 }
 *{box-sizing:border-box;margin:0}
@@ -28,14 +28,14 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .hud{position:absolute;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #top{top:16px;left:20px;right:20px;justify-content:space-between}
 #ttl{font-size:15px;font-weight:500;letter-spacing:-.01em}
-#crumb{font-size:12.5px;color:var(--tx3);margin-top:3px}
+#crumb{font-size:12.5px;color:var(--hud);margin-top:3px}
 .btn{font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--tx2);cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--tx3);color:var(--tx)}
 .btn.on{border-color:var(--tx2);color:var(--tx)}
 #legend{bottom:16px;left:20px;gap:11px;max-width:calc(100% - 260px)}
-.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2)}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--hud)}
 .dt{width:10px;height:10px;border-radius:50%;border:2px solid;background:var(--surface);flex:none}
-#hint{bottom:16px;right:20px;font-size:11.5px;color:var(--tx3);text-align:right;max-width:220px;line-height:1.5}
+#hint{bottom:16px;right:20px;font-size:11.5px;color:var(--hud);text-align:right;max-width:220px;line-height:1.5}
 #panel{position:absolute;top:78px;right:20px;width:308px;padding:14px 16px;border:1px solid var(--line);
   border-radius:12px;background:var(--surface);opacity:0;transform:translateY(-4px);transition:opacity .18s,transform .18s;pointer-events:none}
 #panel.on{opacity:1;transform:none}
@@ -75,7 +75,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
   <div class="hud" id="legend">
     <span id="plg" style="display:flex;gap:11px;flex-wrap:wrap;align-items:center"></span>
     <span style="width:1px;height:16px;background:var(--line);margin:0 4px"></span>
-    <span class="lg" style="color:var(--tx3)">테두리</span>
+    <span class="lg" style="opacity:.72">테두리</span>
     <span class="lg"><span class="dt" style="border-color:var(--done)"></span>완성</span>
     <span class="lg"><span class="dt" style="border-color:var(--wip)"></span>진행 중</span>
     <span class="lg"><span class="dt" style="border-color:var(--todo)"></span>미착수</span>
@@ -195,7 +195,7 @@ function readTheme(){TH={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:cs
   done:css('--done'),wip:css('--wip'),todo:css('--todo'),
   t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
   TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
-  TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):mix(TH.bg,'#8fa3c6',.30);
+  TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):mix(TH.bg,'#8fa3c6',.46);
   FAM=getComputedStyle(document.body).fontFamily;FITC={};FITN=0;MIXC={};MIXN=0;WRC={};WRN=0;GRD=null;}
 var TIER={0:'중심 — 프로젝트 전체',1:'축 — 공유하는 것 / 큰 조각',2:'조각 — 실제로 만든 것'};
 var PHUE=[205,250,300,350,45,100,150];
@@ -321,10 +321,10 @@ function skyGrad(){
     g.addColorStop(.42,mix(TH.bg,'#22375c',.17));
     g.addColorStop(1,mix(TH.bg,'#060a16',.58));
   }else{
-    g.addColorStop(0,mix(TH.bg,'#ffffff',.75));
-    g.addColorStop(.36,mix(TH.bg,'#eef3fc',.60));
-    g.addColorStop(.72,mix(TH.bg,'#c6d3ea',.50));
-    g.addColorStop(1,mix(TH.bg,'#8296bb',.42));
+    g.addColorStop(0,mix(TH.bg,'#ffffff',.90));
+    g.addColorStop(.34,mix(TH.bg,'#e2ebfa',.78));
+    g.addColorStop(.70,mix(TH.bg,'#b3c5e4',.72));
+    g.addColorStop(1,mix(TH.bg,'#6d84ae',.62));
   }
   GRDK=key;return GRD=g;
 }
@@ -517,7 +517,7 @@ document.getElementById('themeb').addEventListener('click',function(){
 document.documentElement.setAttribute('data-theme','dark');
 document.getElementById('themeb').textContent='밝게';
 function buildLegend(){
-  var h='<span class="lg" style="color:var(--tx3)">면</span>'
+  var h='<span class="lg" style="opacity:.72">면</span>'
       + '<span class="lg"><span class="dt" style="border-color:var(--t0ring);background:var(--t0)"></span>Her</span>';
   for(var i=0;i<ring.length;i++)
     h+='<span class="lg"><span class="dt" style="border-color:'+mix(PCOL[i],TH.sf,.35)+';background:'+mix(PCOL[i],TH.sf,.72)+'"></span>'+ring[i].label+'</span>';
