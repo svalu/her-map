@@ -43,6 +43,10 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 #pm{font-size:11px;color:var(--tx3);margin:5px 0 8px}
 #pd{font-size:12.5px;color:var(--tx2);line-height:1.65}
 #pc{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.mrow{width:100%;font-size:11.5px;color:var(--tx2);margin-bottom:6px;line-height:1.5}
+.mrow b{font-weight:500;color:var(--tx3);margin-right:5px}
+.mrow.trap{color:var(--wip)}
+.mrow.trap b{color:var(--wip);opacity:.8}
 .chip{font-size:10.5px;color:var(--tx2);background:var(--chip);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
 @media (max-width:640px){
   #top{top:10px;left:12px;right:12px}
@@ -52,6 +56,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
   #hint{display:none}
   #legend{left:12px;right:12px;bottom:12px;max-width:none;gap:8px}
   .lg{font-size:11px;gap:4px}
+  #allb,#spinb{display:none}
   #panel{top:auto;bottom:84px;left:12px;right:12px;width:auto;max-height:38vh;overflow:auto}
 }
 </style>
@@ -65,7 +70,12 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
       <div id="crumb">큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠/핀치로 확대</div>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn" id="techb">기술 보기</button>
+      <button class="btn" id="playb">재생</button>
+      <span style="width:1px;height:18px;background:var(--line);align-self:center"></span>
+      <button class="btn on" id="techb">기술</button>
+      <button class="btn" id="numb">숫자</button>
+      <button class="btn" id="trapb">함정</button>
+      <span style="width:1px;height:18px;background:var(--line);align-self:center"></span>
       <button class="btn" id="allb">전체 펼치기</button>
       <button class="btn" id="spinb">회전 멈춤</button>
       <button class="btn" id="themeb">어둡게</button>
@@ -177,6 +187,54 @@ var SKY=[];
 (function(){var s=20260826;function rnd(){s=(s*1664525+1013904223)%4294967296;return s/4294967296;}
  for(var i=0;i<230;i++){var u=rnd()*2-1,th=rnd()*6.2832,r=6+rnd()*7,sr=Math.sqrt(1-u*u);
    SKY.push([sr*Math.cos(th)*r, u*r*.62, sr*Math.sin(th)*r, .45+rnd()*.55]);}})();
+
+var NUM={
+ 'Her':['RTX 4080 16GB','API 비용 0'],
+ '눈':['얼굴판정 2~5초'],
+ '몸':['확산 5초=15분','그래서 3D 렌더'],
+ '신경':['17일 공백 회수'],
+ '두뇌':['교재 774쌍','어댑터 v32'],
+ '창작':['채팅3턴 → 44.7초'],
+ '공장':['16fps · 24fps'],
+ '눈/PTZ 제어':['최소 1초'],
+ '눈/얼굴 추적':['판정 2~5초'],
+ '눈/비전 판단':['num_ctx 8192'],
+ '몸/모션 리타게팅':['FID 0.045','자가채점 0.028°'],
+ '몸/표정':['ARKit 52 모프'],
+ '몸/목소리':['웜 1.05초'],
+ '몸/대화 두뇌':['첫토큰 0.13초'],
+ '몸/귀 (STT)':['VRAM ~1GB'],
+ '두뇌/학습':['774쌍 · v32'],
+ '두뇌/빠른 서빙':['12.9초 → 1.7초','4bit 3.2GB'],
+ '두뇌/장면 기억':['30분 = 1장면'],
+ '신경/자동 회수':['17일 회수'],
+ '공장/영상 생성':['16fps · 5초 이하'],
+ '공장/소리 있는 영상':['24fps'],
+ '공장/관절 추출':['COCO 17'],
+ '창작/컷 생성':['3턴 → 44.7초']
+};
+var TRAP={
+ '눈/RTSP 연결':'샤오미 클라우드 잠금',
+ '눈/PTZ 제어':'0.6초 이하 무시',
+ '눈/얼굴 추적':'판정 2~5초 지연',
+ '눈/비전 판단':'num_ctx 기본값 초과',
+ '눈/카메라 교체':'TC72 Wi-Fi 랙',
+ '몸':'확산 5초=15분',
+ '몸/표정':'표정그룹 빈 껍데기',
+ '몸/대화 두뇌':'512토큰 폭주 130초',
+ '두뇌/빠른 서빙':'구형 Ollama MTP',
+ '두뇌/자립 검색':'쓰레기 입력=지어냄',
+ '신경/공유 기억':'로컬 사본이 갈라짐',
+ '신경/양방향 연결':'통로 ≠ 자율성',
+ '신경/완전 자동화':'수동 리듬 먼저',
+ '공장/영상 생성':'이어붙이면 밝기요동',
+ '공장/소리 있는 영상':'이미지→영상 불가',
+ '공장/감독 알고리즘':'비전=평가자 아님',
+ '창작/컷 생성':'2.4b 환각'
+};
+for(var ni=0;ni<N.length;ni++){var no=N[ni];
+  var key=no.tier<2?no.label:(no.sub+'/'+no.label);
+  no.num=NUM[key]||[];no.trap=TRAP[key]||'';}
 var ADJ={};
 for(var ai=0;ai<E.length;ai++){var a1=E[ai][0],b1=E[ai][1];
   if(a1<0||b1<0)continue;
@@ -186,13 +244,13 @@ var cv=document.getElementById('cv'),g2=cv.getContext('2d');
 var panel=document.getElementById('panel'),pt=document.getElementById('pt'),pm=document.getElementById('pm'),pd=document.getElementById('pd'),pc=document.getElementById('pc');
 var crumb=document.getElementById('crumb');
 var rx=-.62,ry=.40,zoom=1,spin=1,drag=0,moved=0,lx=0,ly=0,hov=-1,sel=-1,W=0,H=0,dpr=1;
-var focus=-1,showAll=0,showTech=1,hovA=0;
+var focus=-1,showAll=0,showTech=1,hovA=0,layer='tech';
 var RAD={0:.55,1:.42,2:.32};
 var curC=[0,0,0],curS=60;
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 var TH={},FAM='';
 function readTheme(){TH={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:css('--tx2'),tx3:css('--tx3'),sf:css('--surface'),
-  done:css('--done'),wip:css('--wip'),todo:css('--todo'),
+  done:css('--done'),wip:css('--wip'),todo:css('--todo'),hud:css('--hud'),
   t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
   TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
   TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):mix(TH.bg,'#8fa3c6',.46);
@@ -401,6 +459,8 @@ function draw(){
     }else{
       g2.strokeStyle=fog(col,pp.z,.4);g2.lineWidth=act?4.5:(o.tier===1?3.4:2.4);g2.stroke();
     }
+    if(layer==='trap'&&o.trap){g2.globalAlpha=.95;g2.fillStyle=TH.wip;
+      g2.beginPath();g2.arc(pp.x,pp.y-R,Math.max(2.5,R*.09),0,6.2832);g2.fill();}
     if(o.tier===1&&o.grp===focus){g2.globalAlpha=.5;g2.strokeStyle=col;g2.lineWidth=1;g2.beginPath();g2.arc(pp.x,pp.y,R+7,0,6.2832);g2.stroke();}
     if(isH&&hovA>.02){g2.globalAlpha=hovA;g2.strokeStyle=TH.tx;g2.lineWidth=1.2;
       g2.beginPath();g2.arc(pp.x,pp.y,R+6+7*hovA,0,6.2832);g2.stroke();}
@@ -413,12 +473,14 @@ function draw(){
       var sl=wrap(o.sub,R*1.5,projFs);
       if(sl.length===1&&sl[0]){lines.push(sl[0]);styles.push(2);hs.push(projFs*1.34);}
     }
-    if(showTech&&o.tech&&o.tech.length&&R>26){
+    var LZ=layerLines(o);
+    if(LZ.length&&R>26){
       var used=0;for(var uz=0;uz<hs.length;uz++)used+=hs[uz];
       var room=Math.floor((R*1.5-used)/(techFs*1.2));
-      for(var t=0;t<o.tech.length&&t<room&&t<3;t++){
-        var tl=wrap(o.tech[t],R*1.6,techFs);
-        if(tl.length===1&&tl[0]){lines.push(tl[0]);styles.push(1);hs.push(techFs*1.25);}
+      var lsty=(layer==='trap')?3:1;
+      for(var t=0;t<LZ.length&&t<room&&t<3;t++){
+        var tl=wrap(LZ[t],R*1.6,techFs);
+        if(tl.length===1&&tl[0]){lines.push(tl[0]);styles.push(lsty);hs.push(techFs*1.25);}
       }
     }
     var totalH=0;
@@ -426,7 +488,8 @@ function draw(){
     var yy=pp.y-totalH/2+hs[0]/2-1;
     g2.textAlign='center';g2.textBaseline='middle';
     for(var L=0;L<lines.length;L++){
-      if(styles[L]===1){g2.font='400 '+techFs+'px '+FAM;g2.fillStyle=fog(o.tier===0?TH.t0ring:TH.tx3,pp.z,.34);}
+      if(styles[L]===3){g2.font='400 '+techFs+'px '+FAM;g2.fillStyle=fog(TH.wip,pp.z,.3);}
+      else if(styles[L]===1){g2.font='400 '+techFs+'px '+FAM;g2.fillStyle=fog(o.tier===0?TH.t0ring:TH.tx3,pp.z,.34);}
       else if(styles[L]===2){g2.font='400 '+projFs+'px '+FAM;g2.fillStyle=fog(TH.tx2,pp.z,.34);}
       else{g2.font=(o.tier===2?'400 ':'500 ')+f.fs+'px '+FAM;g2.fillStyle=fog(o.tier===0?TH.t0tx:TH.tx,pp.z,.3);}
       g2.fillText(lines[L],pp.x,yy);
@@ -435,9 +498,31 @@ function draw(){
   }
   g2.globalAlpha=1;
 }
+function layerLines(o){
+  if(layer==='tech')return o.tech||[];
+  if(layer==='num')return o.num||[];
+  if(layer==='trap')return o.trap?[o.trap]:[];
+  return [];}
+function axisOf(g){for(var i=0;i<N.length;i++)if(N[i].tier===1&&N[i].grp===g)return i;return -1;}
+var tour=0,tourI=0,tourT=0,DWELL=3800;
+var TSEQ=[-1,0,1,2,3,4,5,6];
+function tourStop(){if(!tour)return;tour=0;document.getElementById('playb').textContent='재생';
+  document.getElementById('playb').classList.remove('on');setCrumb();}
+function tourStep(){
+  var s=TSEQ[tourI];
+  showAll=0;
+  if(s<0){focus=-1;sel=0;show(0);}
+  else{focus=s;var ax=axisOf(s);if(ax>=0){sel=ax;show(ax);}}
+  setCrumb();}
+function tourTick(now){
+  if(!tour)return;
+  if(now-tourT<DWELL)return;
+  tourI++;
+  if(tourI>=TSEQ.length){tourStop();focus=-1;sel=-1;panel.classList.remove('on');setCrumb();return;}
+  tourT=now;tourStep();}
 function fkey(){return showAll?'A':(focus>=0?'F'+focus:'-')}
 function bump(){var k=fkey();if(k!==prevFocusKey){prevFocusKey=k;anim0=performance.now();animDir=(k!=='-');}}
-function loop(){if(spin&&!drag)ry+=.0022;bump();draw();requestAnimationFrame(loop);}
+function loop(){if(spin&&!drag)ry+=.0022;tourTick(performance.now());bump();draw();requestAnimationFrame(loop);}
 function pick(mx,my){
   var best=-1,bz=-1e9;
   for(var i=0;i<N.length;i++){
@@ -453,10 +538,14 @@ function show(i){
   pt.innerHTML='<span class="dt" style="border-color:'+(o.tier===0?'var(--t0ring);background:var(--t0)':'var(--'+o.st+')')+'"></span>'+esc(o.label);
   pm.textContent=TIER[o.tier]+(o.tier?' · '+o.sub+' · '+ST[o.st]:'');
   pd.textContent=o.d;
-  pc.innerHTML=(o.tech||[]).map(function(t){return '<span class="chip">'+esc(t)+'</span>'}).join('');
+  var extra='';
+  if(o.num&&o.num.length)extra+='<div class="mrow"><b>실측</b> '+o.num.map(esc).join(' · ')+'</div>';
+  if(o.trap)extra+='<div class="mrow trap"><b>데인 곳</b> '+esc(o.trap)+'</div>';
+  pc.innerHTML=extra+(o.tech||[]).map(function(t){return '<span class="chip">'+esc(t)+'</span>'}).join('');
   panel.classList.add('on');
 }
 function setCrumb(){
+  if(tour){crumb.textContent='자동 투어 '+(tourI+1)+' / '+TSEQ.length+' — 화면을 건드리면 멈춘다';return;}
   crumb.textContent=showAll?'전체 펼침 — 조각 40개. 휠이나 두 손가락으로 확대해서 봐.'
     :(focus>=0?ring[focus].label+' 펼침 — 다른 큰 원을 누르면 그쪽으로, 처음으로 누르면 접힘'
               :'큰 원을 클릭하면 그 묶음이 펼쳐진다 · 끌어서 회전 · 휠/핀치로 확대');
@@ -465,6 +554,7 @@ var pts=new Map(),pinch=0,pd0=0,pz0=1;
 function ptsDist(){var a=[];pts.forEach(function(v){a.push(v)});
   return a.length<2?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
 cv.addEventListener('pointerdown',function(ev){
+  tourStop();
   pts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   if(spin){spin=0;document.getElementById('spinb').textContent='다시 회전';}
   if(pts.size>=2){pinch=1;drag=0;moved=999;pd0=ptsDist()||1;pz0=zoom;cv.style.cursor='grab';return;}
@@ -500,12 +590,23 @@ function endPtr(ev){
 cv.addEventListener('pointerup',endPtr);
 cv.addEventListener('pointercancel',function(ev){pts.delete(ev.pointerId);if(pts.size===0)pinch=0;drag=0;});
 cv.addEventListener('pointerleave',function(){if(!pinch)drag=0;hov=-1;});
-cv.addEventListener('wheel',function(ev){ev.preventDefault();zoom=Math.max(.5,Math.min(3.2,zoom*(ev.deltaY<0?1.09:.917)));},{passive:false});
-document.getElementById('techb').addEventListener('click',function(){showTech=showTech?0:1;this.classList.toggle('on',!!showTech);this.textContent=showTech?'기술 숨기기':'기술 보기';});
+cv.addEventListener('wheel',function(ev){ev.preventDefault();tourStop();zoom=Math.max(.5,Math.min(3.2,zoom*(ev.deltaY<0?1.09:.917)));},{passive:false});
+function setLayer(v){
+  layer=(layer===v)?'none':v;
+  ['tech','num','trap'].forEach(function(k){
+    document.getElementById(k==='tech'?'techb':(k==='num'?'numb':'trapb')).classList.toggle('on',layer===k);});}
+document.getElementById('techb').addEventListener('click',function(){setLayer('tech')});
+document.getElementById('numb').addEventListener('click',function(){setLayer('num')});
+document.getElementById('trapb').addEventListener('click',function(){setLayer('trap')});
+document.getElementById('playb').addEventListener('click',function(){
+  if(tour){tourStop();return;}
+  tour=1;tourI=0;tourT=performance.now();this.textContent='정지';this.classList.add('on');
+  if(!spin){spin=1;document.getElementById('spinb').textContent='회전 멈춤';}
+  tourStep();});
 document.getElementById('allb').addEventListener('click',function(){showAll=showAll?0:1;focus=-1;this.textContent=showAll?'다시 접기':'전체 펼치기';setCrumb();});
 document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;this.textContent=spin?'회전 멈춤':'다시 회전';});
 document.getElementById('resetb').addEventListener('click',function(){
-  rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
+  tourStop();rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
   document.getElementById('allb').textContent='전체 펼치기';
   panel.classList.remove('on');setCrumb();
 });
@@ -526,7 +627,7 @@ function buildLegend(){
 window.addEventListener('resize',size);
 readTheme();buildLegend();size();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){FITC={};FITN=0;WRC={};WRN=0;});
-(function(){var tb=document.getElementById('techb');if(showTech){tb.classList.add('on');tb.textContent='기술 숨기기';}})();
+
 var t0=target();curC=[t0.c[0],t0.c[1],t0.c[2]];curS=t0.s;
 loop();
 })();
