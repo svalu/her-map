@@ -195,7 +195,7 @@ function readTheme(){TH={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:cs
   done:css('--done'),wip:css('--wip'),todo:css('--todo'),
   t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
   TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
-  TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):TH.bg;
+  TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):mix(TH.bg,'#8fa3c6',.30);
   FAM=getComputedStyle(document.body).fontFamily;FITC={};FITN=0;MIXC={};MIXN=0;WRC={};WRN=0;GRD=null;}
 var TIER={0:'중심 — 프로젝트 전체',1:'축 — 공유하는 것 / 큰 조각',2:'조각 — 실제로 만든 것'};
 var PHUE=[205,250,300,350,45,100,150];
@@ -321,9 +321,10 @@ function skyGrad(){
     g.addColorStop(.42,mix(TH.bg,'#22375c',.17));
     g.addColorStop(1,mix(TH.bg,'#060a16',.58));
   }else{
-    g.addColorStop(0,mix(TH.bg,'#ffffff',.55));
-    g.addColorStop(.5,mix(TH.bg,'#e9eff9',.40));
-    g.addColorStop(1,mix(TH.bg,'#4d5f85',.16));
+    g.addColorStop(0,mix(TH.bg,'#ffffff',.75));
+    g.addColorStop(.36,mix(TH.bg,'#eef3fc',.60));
+    g.addColorStop(.72,mix(TH.bg,'#c6d3ea',.50));
+    g.addColorStop(1,mix(TH.bg,'#8296bb',.42));
   }
   GRDK=key;return GRD=g;
 }
@@ -343,7 +344,7 @@ function drawSky(){
     var bi=Math.min(4,(tz*5)|0);
     (BK[bi]||(BK[bi]=[])).push(X,Y,(.55+1.45*tz)*p[3]);
   }
-  g2.fillStyle=TH.dark?mix(TH.tx3,'#d3e2ff',.42):TH.tx3;
+  g2.fillStyle=TH.dark?mix(TH.tx3,'#d3e2ff',.42):mix(TH.tx3,'#7e8fb0',.55);
   for(var b=0;b<5;b++){
     var arr=BK[b];if(!arr||!arr.length)continue;
     g2.globalAlpha=aMax*(.22+.78*((b+.5)/5));
