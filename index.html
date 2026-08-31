@@ -190,7 +190,7 @@ function readTheme(){TH={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:cs
   done:css('--done'),wip:css('--wip'),todo:css('--todo'),
   t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
   TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
-  FAM=getComputedStyle(document.body).fontFamily;FITC={};FITN=0;MIXC={};MIXN=0;WRC={};WRN=0;}
+  FAM=getComputedStyle(document.body).fontFamily;FITC={};FITN=0;MIXC={};MIXN=0;WRC={};WRN=0;GRD=null;}
 var TIER={0:'중심 — 프로젝트 전체',1:'축 — 공유하는 것 / 큰 조각',2:'조각 — 실제로 만든 것'};
 var PHUE=[205,250,300,350,45,100,150];
 function hsl2(h,s,l){h=(h%360+360)%360;s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r,g,b;
@@ -304,7 +304,25 @@ function fit_(txt,R){
   }
   return{fs:8.5,L:wrap(txt,R*1.55,8.5)};
 }
+var GRD=null,GRDK='';
+function skyGrad(){
+  var key=W+'x'+H+'|'+(TH.dark?'d':'l');
+  if(GRD&&GRDK===key)return GRD;
+  var cx=W/2,cy=H*.44,R=Math.hypot(W,H)*.62;
+  var g=g2.createRadialGradient(cx,cy,0,cx,cy,R);
+  if(TH.dark){
+    g.addColorStop(0,mix(TH.bg,TH.tx3,.10));
+    g.addColorStop(.45,mix(TH.bg,TH.tx3,.04));
+    g.addColorStop(1,mix(TH.bg,'#000000',.42));
+  }else{
+    g.addColorStop(0,mix(TH.bg,'#ffffff',.55));
+    g.addColorStop(.5,mix(TH.bg,'#ffffff',.12));
+    g.addColorStop(1,mix(TH.bg,TH.tx3,.10));
+  }
+  GRDK=key;return GRD=g;
+}
 function drawSky(){
+  g2.fillStyle=skyGrad();g2.fillRect(0,0,W,H);
   var cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
   var K=Math.min(W,H)*.05*(1+(zoom-1)*.16), f=22, aMax=TH.dark?.34:.15, BK=[[],[],[],[],[]];
   var SN=(W*H<420000)?130:SKY.length;
