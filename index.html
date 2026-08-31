@@ -57,6 +57,8 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
   #legend{left:12px;right:12px;bottom:12px;max-width:none;gap:8px}
   .lg{font-size:11px;gap:4px}
   #allb,#spinb{display:none}
+  #tlbar{bottom:58px;left:12px;right:12px;gap:7px}
+  #tld,#tlc{font-size:11px}
   #panel{top:auto;bottom:84px;left:12px;right:12px;width:auto;max-height:38vh;overflow:auto}
 }
 </style>
@@ -76,6 +78,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
       <button class="btn" id="numb">숫자</button>
       <button class="btn" id="trapb">함정</button>
       <span style="width:1px;height:18px;background:var(--line);align-self:center"></span>
+      <button class="btn" id="timeb">시간</button>
       <button class="btn" id="allb">전체 펼치기</button>
       <button class="btn" id="spinb">회전 멈춤</button>
       <button class="btn" id="themeb">어둡게</button>
@@ -89,6 +92,11 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
     <span class="lg"><span class="dt" style="border-color:var(--done)"></span>완성</span>
     <span class="lg"><span class="dt" style="border-color:var(--wip)"></span>진행 중</span>
     <span class="lg"><span class="dt" style="border-color:var(--todo)"></span>미착수</span>
+  </div>
+  <div class="hud" id="tlbar" style="display:none;left:20px;right:20px;bottom:54px;gap:10px;align-items:center">
+    <span id="tld" style="font-size:12px;color:var(--hud);min-width:92px;white-space:nowrap"></span>
+    <input id="tlr" type="range" min="0" max="59" value="59" style="flex:1;accent-color:var(--tx2);min-width:120px">
+    <span id="tlc" style="font-size:11.5px;color:var(--hud);opacity:.85;white-space:nowrap"></span>
   </div>
   <div class="hud" id="hint">점선 = 부품이 건너가는 길<br>전부 RTX 4080 로컬 · API 비용 0</div>
   <div id="panel"><div id="pt"></div><div id="pm"></div><div id="pd"></div><div id="pc"></div></div>
@@ -235,6 +243,11 @@ var TRAP={
 for(var ni=0;ni<N.length;ni++){var no=N[ni];
   var key=no.tier<2?no.label:(no.sub+'/'+no.label);
   no.num=NUM[key]||[];no.trap=TRAP[key]||'';}
+var D0=Date.UTC(2026,6,3), DAY=864e5, TLN=59, tlOn=0, tlD=TLN;
+var AXB=[Date.UTC(2026,6,3),null,Date.UTC(2026,6,3),Date.UTC(2026,6,3),Date.UTC(2026,6,18),Date.UTC(2026,7,24),Date.UTC(2026,6,31)];
+var CUM=[9,9,9,10,11,11,11,11,11,11,11,11,11,11,14,25,25,25,25,26,26,26,26,26,26,26,26,26,30,38,38,38,38,38,38,38,38,40,40,40,40,40,40,40,40,41,41,43,53,54,54,54,78,82,94,96,100,106,113,121];
+function bornOf(o){return o.tier===0?D0:(o.grp>=0?AXB[o.grp]:D0);}
+function tlNow(){return D0+tlD*DAY;}
 var ADJ={};
 for(var ai=0;ai<E.length;ai++){var a1=E[ai][0],b1=E[ai][1];
   if(a1<0||b1<0)continue;
@@ -289,7 +302,9 @@ function satA(o){
   return animDir?p:1;
 }
 function size(){dpr=Math.min(window.devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;g2.setTransform(dpr,0,0,dpr,0,0)}
-function vis(i){var o=N[i];return o.tier<2||showAll||o.grp===focus}
+function vis(i){var o=N[i];
+  if(tlOn){var b=bornOf(o);if(b!==null&&b>tlNow())return false;}
+  return o.tier<2||showAll||o.grp===focus;}
 function wpos(i,full){
   var o=N[i];
   if(o.tier<2)return o.p;
@@ -606,7 +621,7 @@ document.getElementById('playb').addEventListener('click',function(){
 document.getElementById('allb').addEventListener('click',function(){showAll=showAll?0:1;focus=-1;this.textContent=showAll?'다시 접기':'전체 펼치기';setCrumb();});
 document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;this.textContent=spin?'회전 멈춤':'다시 회전';});
 document.getElementById('resetb').addEventListener('click',function(){
-  tourStop();rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
+  tourStop();tlSet(0);tlD=TLN;tlr.value=TLN;rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
   document.getElementById('allb').textContent='전체 펼치기';
   panel.classList.remove('on');setCrumb();
 });
@@ -624,6 +639,19 @@ function buildLegend(){
     h+='<span class="lg"><span class="dt" style="border-color:'+mix(PCOL[i],TH.sf,.35)+';background:'+mix(PCOL[i],TH.sf,.72)+'"></span>'+ring[i].label+'</span>';
   document.getElementById('plg').innerHTML=h;
 }
+var tlbar=document.getElementById('tlbar'),tlr=document.getElementById('tlr'),
+    tld=document.getElementById('tld'),tlc=document.getElementById('tlc');
+function tlPaint(){
+  var d=new Date(tlNow());
+  tld.textContent=(d.getUTCMonth()+1)+'월 '+d.getUTCDate()+'일';
+  var live=0;for(var i=0;i<AXB.length;i++)if(AXB[i]===null||AXB[i]<=tlNow())live++;
+  tlc.textContent='기록 '+CUM[tlD]+'개 · 축 '+live+'/7';}
+function tlSet(on){
+  tlOn=on?1:0;tlbar.style.display=on?'flex':'none';
+  document.getElementById('timeb').classList.toggle('on',!!on);
+  if(on)tlPaint();}
+document.getElementById('timeb').addEventListener('click',function(){tourStop();tlSet(!tlOn);});
+tlr.addEventListener('input',function(){tlD=+this.value;tlPaint();});
 window.addEventListener('resize',size);
 readTheme();buildLegend();size();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){FITC={};FITN=0;WRC={};WRN=0;});
