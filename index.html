@@ -258,7 +258,7 @@ var cv=document.getElementById('cv'),g2=cv.getContext('2d');
 var panel=document.getElementById('panel'),pt=document.getElementById('pt'),pm=document.getElementById('pm'),pd=document.getElementById('pd'),pc=document.getElementById('pc');
 var crumb=document.getElementById('crumb');
 var rx=-.62,ry=.40,zoom=1,spin=1,drag=0,moved=0,lx=0,ly=0,hov=-1,sel=-1,W=0,H=0,dpr=1;
-var focus=-1,showAll=0,showTech=1,hovA=0,layer='tech',vry=0,vrx=0;
+var focus=-1,showAll=0,showTech=1,hovA=0,layer='tech',vry=0,vrx=0,userStop=0,SP=.0022;
 var RAD={0:.55,1:.42,2:.32};
 var curC=[0,0,0],curS=60;
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
@@ -562,11 +562,16 @@ function tourTick(now){
 function fkey(){return showAll?'A':(focus>=0?'F'+focus:'-')}
 function bump(){var k=fkey();if(k!==prevFocusKey){prevFocusKey=k;anim0=performance.now();animDir=(k!=='-');}}
 function loop(){
-  if(!drag&&!pinch&&(Math.abs(vry)>2e-4||Math.abs(vrx)>2e-4)){
-    ry+=vry;rx=Math.max(-1.25,Math.min(1.25,rx+vrx));
-    vry*=.947;vrx*=.947;
-  }else{vry=0;vrx=0;}
-  if(spin&&!drag)ry+=.0022;tourTick(performance.now());bump();draw();requestAnimationFrame(loop);}
+  if(!drag&&!pinch){
+    if(Math.abs(vry)>SP*1.05||Math.abs(vrx)>3e-4){
+      ry+=vry;rx=Math.max(-1.25,Math.min(1.25,rx+vrx));
+      vry*=.947;vrx*=.947;
+    }else if(vry||vrx){
+      vry=0;vrx=0;
+      if(!userStop&&!spin){spin=1;document.getElementById('spinb').textContent='회전 멈춤';}
+    }
+  }
+  if(spin&&!drag)ry+=SP;tourTick(performance.now());bump();draw();requestAnimationFrame(loop);}
 function pick(mx,my){
   var best=-1,bz=-1e9;
   for(var i=0;i<N.length;i++){
@@ -649,10 +654,10 @@ document.getElementById('trapb').addEventListener('click',function(){setLayer('t
 document.getElementById('playb').addEventListener('click',function(){
   if(tour){tourStop();return;}
   tour=1;tourI=0;tourT=performance.now();this.textContent='정지';this.classList.add('on');
-  if(!spin){spin=1;document.getElementById('spinb').textContent='회전 멈춤';}
+  userStop=0;if(!spin){spin=1;document.getElementById('spinb').textContent='회전 멈춤';}
   tourStep();});
 document.getElementById('allb').addEventListener('click',function(){showAll=showAll?0:1;focus=-1;this.textContent=showAll?'다시 접기':'전체 펼치기';setCrumb();});
-document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;this.textContent=spin?'회전 멈춤':'다시 회전';});
+document.getElementById('spinb').addEventListener('click',function(){spin=spin?0:1;userStop=spin?0:1;vry=0;vrx=0;this.textContent=spin?'회전 멈춤':'다시 회전';});
 document.getElementById('resetb').addEventListener('click',function(){
   tourStop();tlSet(0);tlD=TLN;tlr.value=TLN;rx=-.62;ry=.40;zoom=1;sel=-1;focus=-1;showAll=0;
   document.getElementById('allb').textContent='전체 펼치기';
