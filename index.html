@@ -21,6 +21,8 @@
   --t0:#55504a; --t0tx:#f6f2ec; --t0ring:#9c948a; --t1:#28302b; --t2:#232120;
 }
 *{box-sizing:border-box;margin:0}
+body,.btn,.lg,.ln,#crumb,#hint,#panel,#pm,#pd,.chip,.mrow,#tld,#tlc,.dt{
+  transition:background-color .42s ease,color .42s ease,border-color .42s ease}
 html,body{height:100%}
 body{background:var(--bg);color:var(--tx);font-family:"Pretendard Variable","Pretendard","Noto Sans KR","Malgun Gothic",-apple-system,system-ui,sans-serif;overflow:hidden}
 #stage{position:relative;width:100%;height:100%}
@@ -263,12 +265,20 @@ var RAD={0:.55,1:.42,2:.32};
 var curC=[0,0,0],curS=60;
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 var TH={},FAM='';
-function readTheme(){TH={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:css('--tx2'),tx3:css('--tx3'),sf:css('--surface'),
+var THa=null,THb=null,dA=0,dB=0,THP=1,THPE=1,thStart=0,THDUR=420;
+function snapTheme(){var o={bg:css('--bg'),line:css('--line'),tx:css('--tx'),tx2:css('--tx2'),tx3:css('--tx3'),sf:css('--surface'),
   done:css('--done'),wip:css('--wip'),todo:css('--todo'),hud:css('--hud'),
   t0:css('--t0'),t0tx:css('--t0tx'),t0ring:css('--t0ring'),t1:css('--t1'),t2:css('--t2')};
-  TH.dark=document.documentElement.getAttribute('data-theme')==='dark';
-  TH.atm=TH.dark?mix(TH.bg,'#22375c',.22):mix(TH.bg,'#8fa3c6',.46);
+  o.dark=document.documentElement.getAttribute('data-theme')==='dark';
+  o.atm=o.dark?mix(o.bg,'#22375c',.22):mix(o.bg,'#8fa3c6',.46);
+  return o;}
+function blendTheme(a,b,p){var o={};
+  for(var k in b){var vb=b[k];o[k]=(typeof vb==='string')?mix(a[k],vb,p):vb;}
+  return o;}
+function readTheme(){THb=snapTheme();THa=THb;dA=dB=THb.dark?1:0;THP=1;THPE=1;TH=THb;
   FAM=getComputedStyle(document.body).fontFamily;FITC={};FITN=0;MIXC={};MIXN=0;WRC={};WRN=0;GRD=null;}
+function startThemeFade(){THa=TH;dA=THa.dark?1:0;THb=snapTheme();dB=THb.dark?1:0;
+  THP=0;THPE=0;thStart=performance.now();GRD=null;}
 var TIER={0:'중심 — 프로젝트 전체',1:'축 — 공유하는 것 / 큰 조각',2:'조각 — 실제로 만든 것'};
 var PHUE=[205,250,300,350,45,100,150];
 function hsl2(h,s,l){h=(h%360+360)%360;s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r,g,b;
@@ -288,16 +298,17 @@ function mix(a,b,t){var key=a+'|'+b+'|'+(t*100|0),c=MIXC[key];
   MIXC[key]=c;MIXN++;return c;}
 function pcol(o){return o.grp>=0?PCOL[o.grp%PCOL.length]:null;}
 var STA={done:1,wip:.72,todo:.44};
+function ringFor(o,dk){var h=PHUE[o.grp%PHUE.length];return dk?hsl2(h,64,64):hsl2(h,58,46);}
 function ringCol(o){
   if(o.grp<0)return TH.t0ring;
-  var h=PHUE[o.grp%PHUE.length];
-  return TH.dark?hsl2(h,64,64):hsl2(h,58,46);}
+  return (THPE>=1||dA===dB)?ringFor(o,dB):mix(ringFor(o,dA),ringFor(o,dB),THPE);}
+function fillFor(o,dk){var h=PHUE[o.grp%PHUE.length];
+  if(o.tier===1)return dk?hsl2(h,44,25):hsl2(h,46,87);
+  return dk?hsl2(h,30,17):hsl2(h,24,92);}
 function nodeFill(o){
   if(o.tier===0)return TH.t0;
   if(o.grp<0)return TH.sf;
-  var h=PHUE[o.grp%PHUE.length];
-  if(o.tier===1)return TH.dark?hsl2(h,44,25):hsl2(h,46,87);
-  return TH.dark?hsl2(h,30,17):hsl2(h,24,92);
+  return (THPE>=1||dA===dB)?fillFor(o,dB):mix(fillFor(o,dA),fillFor(o,dB),THPE);
 }
 var anim0=0,animDir=1,prevFocusKey='';
 function ease(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
@@ -391,26 +402,32 @@ function fit_(txt,R){
 }
 var GRD=null,GRDK='';
 function skyGrad(){
-  var key=W+'x'+H+'|'+(TH.dark?'d':'l');
+  var key=W+'x'+H+'|'+dA+dB+'|'+(THPE>=1?9:(THPE*40|0));
   if(GRD&&GRDK===key)return GRD;
   var cx=W/2,cy=H*.44,R=Math.hypot(W,H)*.62;
   var g=g2.createRadialGradient(cx,cy,0,cx,cy,R);
-  if(TH.dark){
-    g.addColorStop(0,mix(TH.bg,'#33507f',.30));
-    g.addColorStop(.42,mix(TH.bg,'#22375c',.17));
-    g.addColorStop(1,mix(TH.bg,'#060a16',.58));
+  var SG=function(dk,bg){return dk
+    ?[[0,mix(bg,'#33507f',.30)],[.42,mix(bg,'#22375c',.17)],[1,mix(bg,'#060a16',.58)]]
+    :[[0,mix(bg,'#ffffff',.90)],[.34,mix(bg,'#e2ebfa',.78)],[.70,mix(bg,'#b3c5e4',.72)],[1,mix(bg,'#6d84ae',.62)]];};
+  var at=function(ss,q){var prev=ss[0];
+    for(var i2=0;i2<ss.length;i2++){var nx=ss[i2];
+      if(nx[0]>=q){if(nx[0]===prev[0])return nx[1];
+        return mix(prev[1],nx[1],(q-prev[0])/(nx[0]-prev[0]));}
+      prev=nx;}
+    return ss[ss.length-1][1];};
+  if(THPE>=1||dA===dB){var s1=SG(dB,TH.bg);
+    for(var i1=0;i1<s1.length;i1++)g.addColorStop(s1[i1][0],s1[i1][1]);
   }else{
-    g.addColorStop(0,mix(TH.bg,'#ffffff',.90));
-    g.addColorStop(.34,mix(TH.bg,'#e2ebfa',.78));
-    g.addColorStop(.70,mix(TH.bg,'#b3c5e4',.72));
-    g.addColorStop(1,mix(TH.bg,'#6d84ae',.62));
+    var sa=SG(dA,THa.bg),sb=SG(dB,THb.bg);
+    for(var q=0;q<=1.0001;q+=.125){var qq=Math.min(1,q);
+      g.addColorStop(qq,mix(at(sa,qq),at(sb,qq),THPE));}
   }
   GRDK=key;return GRD=g;
 }
 function drawSky(){
   g2.fillStyle=skyGrad();g2.fillRect(0,0,W,H);
   var cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
-  var K=Math.min(W,H)*.05*(1+(zoom-1)*.16), f=22, aMax=TH.dark?.34:.15, BK=[[],[],[],[],[]];
+  var K=Math.min(W,H)*.05*(1+(zoom-1)*.16), f=22, aMax=((dA?.34:.15)*(1-THPE)+(dB?.34:.15)*THPE), BK=[[],[],[],[],[]];
   var SN=(W*H<420000)?130:SKY.length;
   for(var i=0;i<SN;i++){
     var p=SKY[i];
@@ -423,7 +440,8 @@ function drawSky(){
     var bi=Math.min(4,(tz*5)|0);
     (BK[bi]||(BK[bi]=[])).push(X,Y,(.55+1.45*tz)*p[3]);
   }
-  g2.fillStyle=TH.dark?mix(TH.tx3,'#d3e2ff',.42):mix(TH.tx3,'#7e8fb0',.55);
+  var stFor=function(dk){return dk?mix(TH.tx3,'#d3e2ff',.42):mix(TH.tx3,'#7e8fb0',.55);};
+  g2.fillStyle=(THPE>=1||dA===dB)?stFor(dB):mix(stFor(dA),stFor(dB),THPE);
   for(var b=0;b<5;b++){
     var arr=BK[b];if(!arr||!arr.length)continue;
     g2.globalAlpha=aMax*(.22+.78*((b+.5)/5));
@@ -438,6 +456,9 @@ function draw(){
   curC[0]+=(tg.c[0]-curC[0])*.12;curC[1]+=(tg.c[1]-curC[1])*.12;curC[2]+=(tg.c[2]-curC[2])*.12;
   curS+=(tg.s-curS)*.12;
   var TNOW=performance.now();
+  if(THP<1){THP=Math.min(1,(TNOW-thStart)/THDUR);
+    THPE=(THP>=1)?1:1-Math.pow(1-THP,3);
+    TH=(THP>=1)?THb:blendTheme(THa,THb,THPE);GRD=null;}
   var AK=(hov>=0?hov:sel);
   hovA+=((AK>=0?1:0)-hovA)*.18;
   var HL=(AK>=0&&hovA>.01), dim=.62*hovA;
@@ -666,7 +687,7 @@ document.getElementById('resetb').addEventListener('click',function(){
 document.getElementById('themeb').addEventListener('click',function(){
   var d=document.documentElement.getAttribute('data-theme')==='dark';
   document.documentElement.setAttribute('data-theme',d?'light':'dark');
-  this.textContent=d?'어둡게':'밝게';readTheme();buildLegend();
+  this.textContent=d?'어둡게':'밝게';startThemeFade();buildLegend();
 });
 document.documentElement.setAttribute('data-theme','dark');
 document.getElementById('themeb').textContent='밝게';
