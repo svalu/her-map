@@ -431,6 +431,7 @@ function draw(){
   var tg=target();
   curC[0]+=(tg.c[0]-curC[0])*.12;curC[1]+=(tg.c[1]-curC[1])*.12;curC[2]+=(tg.c[2]-curC[2])*.12;
   curS+=(tg.s-curS)*.12;
+  var TNOW=performance.now();
   hovA+=((hov>=0?1:0)-hovA)*.18;
   var HL=(hov>=0&&hovA>.01), dim=.62*hovA;
   g2.clearRect(0,0,W,H);
@@ -454,6 +455,17 @@ function draw(){
     g2.lineWidth=(dashed?1.2:1.9)*(1.18-.38*dT(dz))*(eOn?1.7:1);
     g2.setLineDash(dashed?[6,6]:[]);
     g2.beginPath();g2.moveTo(a.x,a.y);g2.lineTo(b.x,b.y);g2.stroke();
+    if(eOn&&hovA>.05){
+      var fa=(A===hov)?a:b, fb=(A===hov)?b:a;
+      var per=26, off=-((TNOW*.055)%per);
+      g2.strokeStyle=ec?mix(ec,TH.tx,.5):TH.tx;
+      g2.lineCap='round';g2.setLineDash([2,per-2]);g2.lineDashOffset=off;
+      g2.globalAlpha=.26*hovA;g2.lineWidth=7;
+      g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
+      g2.globalAlpha=.92*hovA;g2.lineWidth=3;
+      g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
+      g2.lineCap='butt';g2.setLineDash([]);g2.lineDashOffset=0;
+    }
   }
   g2.setLineDash([]);g2.globalAlpha=1;
   var ord=[];
