@@ -450,7 +450,7 @@ function draw(){
     var ea=Math.max(.16,Math.min(.62,.42+dz*.05));
     if(N[B].tier===2)ea*=satA(N[B]);
     var eOn=HL&&(A===hov||B===hov);
-    g2.globalAlpha=HL?(eOn?Math.min(.58,ea+.065*hovA):ea*(1-.17*hovA)):ea;
+    g2.globalAlpha=HL?(eOn?Math.min(.66,ea+.078*hovA):ea*(1-.20*hovA)):ea;
     g2.strokeStyle=eOn?(ec?mix(ec,TH.sf,.30):TH.tx2):fog(dashed?TH.tx3:(ec?mix(ec,TH.sf,.42):TH.line),dz,.55);
     g2.lineWidth=(dashed?1.2:1.9)*(1.18-.38*dT(dz))*1;
     g2.setLineDash(dashed?[6,6]:[]);
@@ -460,9 +460,9 @@ function draw(){
       var per=27, off=-((TNOW*.05)%per);
       g2.strokeStyle=ec?mix(ec,TH.tx,.04):TH.tx2;
       g2.lineCap='round';g2.setLineDash([1.8,per-1.8]);g2.lineDashOffset=off;
-      g2.globalAlpha=.05*hovA;g2.lineWidth=4;
+      g2.globalAlpha=.06*hovA;g2.lineWidth=4;
       g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
-      g2.globalAlpha=.175*hovA;g2.lineWidth=1.6;
+      g2.globalAlpha=.21*hovA;g2.lineWidth=1.6;
       g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
       g2.lineCap='butt';g2.setLineDash([]);g2.lineDashOffset=0;
     }
