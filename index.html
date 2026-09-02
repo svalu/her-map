@@ -438,8 +438,9 @@ function draw(){
   curC[0]+=(tg.c[0]-curC[0])*.12;curC[1]+=(tg.c[1]-curC[1])*.12;curC[2]+=(tg.c[2]-curC[2])*.12;
   curS+=(tg.s-curS)*.12;
   var TNOW=performance.now();
-  hovA+=((hov>=0?1:0)-hovA)*.18;
-  var HL=(hov>=0&&hovA>.01), dim=.62*hovA;
+  var AK=(hov>=0?hov:sel);
+  hovA+=((AK>=0?1:0)-hovA)*.18;
+  var HL=(AK>=0&&hovA>.01), dim=.62*hovA;
   g2.clearRect(0,0,W,H);
   drawSky();
   var P=N.map(function(o,i){return proj(wpos(i))});
@@ -455,20 +456,20 @@ function draw(){
     var eo=N[B].tier===2?N[B]:(N[B].tier===1?N[B]:N[A]), ec=pcol(eo);
     var ea=Math.max(.16,Math.min(.62,.42+dz*.05));
     if(N[B].tier===2)ea*=satA(N[B]);
-    var eOn=HL&&(A===hov||B===hov);
-    g2.globalAlpha=HL?(eOn?Math.min(.66,ea+.078*hovA):ea*(1-.20*hovA)):ea;
+    var eOn=HL&&(A===AK||B===AK);
+    g2.globalAlpha=HL?(eOn?Math.min(.74,ea+.09*hovA):ea*(1-.22*hovA)):ea;
     g2.strokeStyle=eOn?(ec?mix(ec,TH.sf,.30):TH.tx2):fog(dashed?TH.tx3:(ec?mix(ec,TH.sf,.42):TH.line),dz,.55);
     g2.lineWidth=(dashed?1.2:1.9)*(1.18-.38*dT(dz))*1;
     g2.setLineDash(dashed?[6,6]:[]);
     g2.beginPath();g2.moveTo(a.x,a.y);g2.lineTo(b.x,b.y);g2.stroke();
     if(eOn&&hovA>.05){
-      var fa=(A===hov)?a:b, fb=(A===hov)?b:a;
+      var fa=(A===AK)?a:b, fb=(A===AK)?b:a;
       var per=27, off=-((TNOW*.05)%per);
       g2.strokeStyle=ec?mix(ec,TH.tx,.04):TH.tx2;
       g2.lineCap='round';g2.setLineDash([1.8,per-1.8]);g2.lineDashOffset=off;
-      g2.globalAlpha=.06*hovA;g2.lineWidth=4;
+      g2.globalAlpha=.07*hovA;g2.lineWidth=4;
       g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
-      g2.globalAlpha=.21*hovA;g2.lineWidth=1.6;
+      g2.globalAlpha=.25*hovA;g2.lineWidth=1.7;
       g2.beginPath();g2.moveTo(fa.x,fa.y);g2.lineTo(fb.x,fb.y);g2.stroke();
       g2.lineCap='butt';g2.setLineDash([]);g2.lineDashOffset=0;
     }
@@ -479,7 +480,7 @@ function draw(){
   ord.sort(function(a,b){return P[a].z-P[b].z});
   for(var q=0;q<ord.length;q++){
     var k=ord[q],o=N[k],pp=P[k],av=satA(o),R=RAD[o.tier]*pp.k*(o.tier===2?(.35+.65*av):1),col=TH[o.st],act=(k===hov||k===sel);
-    var isH=(k===hov), rel=HL?near(k,hov):1, off=HL?(1-rel)*dim:0;
+    var isH=(k===hov), rel=HL?near(k,AK):1, off=HL?(1-rel)*dim:0;
     if(isH)R*=1+.07*hovA;
     if(o.tier===2&&av<=.02)continue;
     var dt=dT(pp.z);
