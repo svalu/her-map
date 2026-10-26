@@ -296,7 +296,7 @@ for(var ai=0;ai<E.length;ai++){var a1=E[ai][0],b1=E[ai][1];
   (ADJ[a1]||(ADJ[a1]={}))[b1]=1;(ADJ[b1]||(ADJ[b1]={}))[a1]=1;}
 function near(i,h){return i===h||(ADJ[h]&&ADJ[h][i])?1:0;}
 var cv=document.getElementById('cv'),g2=cv.getContext('2d');
-var TNOW=0, boot=1, bootT0=0, BOOTDUR=2600, BP=0, PT=[];
+var TNOW=0, boot=1, bootT0=0, BOOTDUR=2600, BP=0, PT=[], GL=null, landT=0, landK=-1, GLDUR=520;
 var stage=document.getElementById('stage'), splash=document.getElementById('splash');
 var REDUCED=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 var AUTOTOUR=!REDUCED&&location.search.indexOf('quiet')<0;
@@ -573,6 +573,7 @@ function draw(){
     var k=ord[q],o=N[k],pp=P[k],av=satA(o),R=RAD[o.tier]*pp.k*(o.tier===2?(.35+.65*av):1),col=TH[o.st],act=(k===hov||k===sel);
     var isH=(k===hov), rel=HL?near(k,AK):1, off=HL?(1-rel)*dim:0;
     if(isH)R*=1+.07*hovA;
+    if(k===landK&&landT){var lb=(TNOW-landT)/420;if(lb<1)R*=1+.13*Math.sin(3.14159*lb);}
     if(boot)R*=.5+.5*BP;
     if(o.tier===2&&av<=.02)continue;
     var dt=dT(pp.z);
@@ -631,7 +632,22 @@ function draw(){
       yy+=hs[L];
     }
   }
-  if(tour&&!tourPaused&&sel>=0&&vis(sel)){
+  if(GL){
+    var ge=Math.min(1,(TNOW-GL.t0)/GLDUR),gq=easeIO(ge);
+    var pa=P[GL.from],pb=P[GL.to];
+    var gx=pa.x+(pb.x-pa.x)*gq,gy=pa.y+(pb.y-pa.y)*gq;
+    var ra=RAD[N[GL.from].tier]*pa.k,rb=RAD[N[GL.to].tier]*pb.k,gr=ra+(rb-ra)*gq;
+    var gc=N[GL.to].grp>=0?ringCol(N[GL.to]):TH.t0ring;
+    if(vis(GL.from)){g2.strokeStyle=gc;g2.lineWidth=1.3;g2.globalAlpha=(1-gq)*.45;
+      g2.beginPath();g2.arc(pa.x,pa.y,ra+8-8*gq,0,6.2832);g2.stroke();}
+    g2.strokeStyle=gc;g2.lineWidth=2;g2.globalAlpha=.9;
+    g2.beginPath();g2.arc(gx,gy,gr*(1.08-.18*Math.sin(3.14159*gq))+5,0,6.2832);g2.stroke();
+    g2.fillStyle=gc;g2.globalAlpha=.95;
+    g2.beginPath();g2.arc(gx,gy,3.2,0,6.2832);g2.fill();
+    if(PT.length<70)PT.push({x:gx,y:gy,vx:0,vy:0,t:TNOW,c:gc,l:360});
+    if(ge>=1){var lk=GL.to;GL=null;land(lk);}
+  }
+  if(tour&&!tourPaused&&!GL&&sel>=0&&vis(sel)){
     var sp=P[sel],sR=RAD[N[sel].tier]*sp.k,ph=(TNOW%1500)/1500;
     g2.strokeStyle=N[sel].grp>=0?ringCol(N[sel]):TH.t0ring;
     g2.lineWidth=1.6;g2.globalAlpha=(1-ph)*.55;
@@ -641,7 +657,7 @@ function draw(){
     g2.beginPath();g2.arc(sp.x,sp.y,sR+6+26*ph2,0,6.2832);g2.stroke();
   }
   if(PT.length){
-    for(var pi=PT.length-1;pi>=0;pi--){var q=PT[pi],ag=(TNOW-q.t)/680;
+    for(var pi=PT.length-1;pi>=0;pi--){var q=PT[pi],ag=(TNOW-q.t)/(q.l||680);
       if(ag>=1){PT.splice(pi,1);continue;}
       var e2=1-Math.pow(1-ag,2);
       g2.fillStyle=q.c;g2.globalAlpha=(1-ag)*.85;
@@ -665,6 +681,12 @@ function buildTour(){
     var subs=[];for(var i=0;i<N.length;i++)if(N[i].tier===2&&N[i].grp===g&&subs.length<4)subs.push(i);
     GT.push({ax:g,n:ring[g].label,s:ring[g].sub,cap:ring[g].d,subs:subs});}
   GT.push({ax:-2,n:'Her',s:'조각들이 모여서',cap:'눈·몸·두뇌·신경·창작·공장 — 따로 만든 조각이 아니라 한 존재의 기관들이다. 전부 한 대의 PC 안에서, API 비용 0으로. 종착점은 거창한 게 아니다 — 같이 노는 것.'});}
+function easeIO(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
+function glideTo(from,to){
+  if(to<0)return;
+  if(from<0||from===to){GL=null;land(to);return;}
+  GL={from:from,to:to,t0:TNOW};}
+function land(k){landT=TNOW;landK=k;burstAt(k);}
 function burstAt(k){
   if(k<0||!vis(k))return;
   var sp=proj(wpos(k)),c=N[k].grp>=0?ringCol(N[k]):TH.t0ring;
@@ -677,15 +699,15 @@ function renderDots(){
   var h='';for(var i=0;i<GT.length;i++)h+='<span class="dot'+(i===gi?' on':(i<gi?' done':''))+'" data-i="'+i+'"></span>';
   capd.innerHTML=h;}
 function applyStep(){
-  var st=GT[gi];showAll=0;if(tlOn)tlSet(0);
+  var st=GT[gi],prevSel=sel;showAll=0;if(tlOn)tlSet(0);
   if(st.ax===-1){focus=-1;sel=0;}
   else if(st.ax===-2){showAll=1;focus=-1;sel=0;}
   else{focus=st.ax;sel=axisOf(st.ax);}
   if(W>=640&&sel>=0)show(sel);
-  burstAt(sel);setCap(st.n,st.s,st.cap);renderDots();setCrumb();}
+  glideTo(prevSel,sel);setCap(st.n,st.s,st.cap);renderDots();setCrumb();}
 function applySub(){
-  var st=GT[gi],k=st.subs[si];sel=k;
-  if(W>=640)show(k);burstAt(k);
+  var st=GT[gi],k=st.subs[si],prevSel=sel;sel=k;
+  if(W>=640)show(k);glideTo(prevSel,k);
   setCap(st.n+' › '+N[k].label,ST[N[k].st],N[k].d);}
 function gotoStep(n,now){gi=Math.max(0,Math.min(GT.length-1,n));si=-1;gT0=now||performance.now();applyStep();}
 function nextStep(now){if(gi+1>=GT.length){tourEnd();return;}gotoStep(gi+1,now);}
@@ -706,11 +728,11 @@ function tourStart(){
 function tourPause(){if(!tour||tourPaused)return;tourPaused=1;cappp.textContent='▶ 이어보기';cappp.classList.add('p');setCrumb();}
 function tourResume(){if(!tour||!tourPaused)return;tourPaused=0;gT0=performance.now();cappp.textContent='⏸';cappp.classList.remove('p');setCrumb();}
 function tourStop(){
-  if(!tour)return;tour=0;tourPaused=0;
+  if(!tour)return;tour=0;tourPaused=0;GL=null;
   var pb=document.getElementById('playb');pb.textContent='투어';pb.classList.remove('on');
   stage.classList.remove('touring');cap.classList.remove('on');setCrumb();}
 function tourEnd(){
-  tour=0;tourPaused=0;showAll=0;focus=-1;sel=-1;panel.classList.remove('on');
+  tour=0;tourPaused=0;GL=null;showAll=0;focus=-1;sel=-1;panel.classList.remove('on');
   var pb=document.getElementById('playb');pb.textContent='투어';pb.classList.remove('on');
   stage.classList.remove('touring');
   setCap('끝','','이제 직접 둘러봐도 된다. 큰 원을 누르면 펼쳐지고, 위의 기술·숫자·함정으로 레이어를 바꿀 수 있다. 다시 보려면 투어.');
